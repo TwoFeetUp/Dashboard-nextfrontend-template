@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/hooks/use-auth"
 import pb from "@/lib/pocketbase"
 import { MemoizedMarkdown } from "@/components/memoized-markdown"
+import { agentConfig } from "@/lib/agent-config"
 
 interface ChatSession {
   id: string
@@ -180,13 +181,17 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     }
     
     try {
-      // Call the API
-      const response = await fetch('/api/chat', {
+      // Call the API - use agent backend or direct Mistral based on config
+      const chatEndpoint = agentConfig.getChatEndpoint()
+      console.log(`Using chat endpoint: ${chatEndpoint} (Agent backend: ${agentConfig.useAgentBackend()})`)
+
+      const response = await fetch(chatEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [...messages, userMessage],
-          assistantType: toolId
+          assistantType: toolId,
+          conversation_id: conversationId
         })
       })
       
