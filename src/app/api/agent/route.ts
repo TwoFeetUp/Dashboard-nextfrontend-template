@@ -28,10 +28,12 @@ export async function POST(req: NextRequest) {
     // Get agent backend URL from environment
     const agentUrl = process.env.NEXT_PUBLIC_AGENT_API_URL || 'http://localhost:8000'
 
-    // Extract the last message from the messages array if provided
+    // Extract the last message and assistantType
     const message = body.messages
       ? body.messages[body.messages.length - 1].content
       : body.message
+
+    const assistantType = (body as any).assistantType
 
     if (!message) {
       return Response.json(
@@ -40,8 +42,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Forward request to agent backend
-    const response = await fetch(`${agentUrl}/chat`, {
+    // Forward request to agent backend STREAMING endpoint
+    const response = await fetch(`${agentUrl}/chat/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,7 +54,8 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         message,
-        conversation_id: body.conversation_id || 'default'
+        conversation_id: body.conversation_id || 'default',
+        agent: assistantType // Pass the agent type for routing
       })
     })
 
@@ -65,13 +68,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const data = await response.json() as AgentResponse
-
-    // Return in a format compatible with the chat interface
-    return Response.json({
-      role: 'assistant',
-      content: data.response,
-      conversation_id: data.conversation_id
+    // Stream the response back to the frontend
+    return new Response(response.body, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     })
 
   } catch (error) {
