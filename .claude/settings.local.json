@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "Bash(npx:*)",
+      "Bash(bash:*)",
+      "Bash(npm install:*)",
+      "Bash(tree:*)",
+      "mcp__railway__list-projects",
+      "Bash(railway link:*)",
+      "mcp__railway__deploy",
+      "mcp__railway__list-services",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "mcp__pocketbase-server__list_collections",
+      "mcp__pocketbase-server__delete_record",
+      "mcp__pocketbase-server__list_records",
+      "mcp__pocketbase-server__authenticate_user",
+      "mcp__pocketbase-server__create_collection",
+      "mcp__pocketbase-server__update_collection",
+      "mcp__pocketbase-server__create_record",
+      "mcp__pocketbase-server__update_record",
+      "Bash(cat:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run:*)",
+      "mcp__pocketbase-server__get_collection",
+      "Bash(curl:*)",
+      "Bash(python:*)",
+      "Bash(netstat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

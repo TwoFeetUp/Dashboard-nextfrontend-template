@@ -1,0 +1,148 @@
+.message-content {
+  animation: fadeInMessage 0.3s ease-out;
+}
+
+@keyframes fadeInMessage {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Typing indicator animation */
+.typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 0;
+}
+
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #9CA3AF;
+  animation: pulse 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* User message animation */
+.user-message {
+  animation: slideInRight 0.2s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Table scrolling fixes */
+.markdown-content {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.markdown-content table {
+  table-layout: auto;
+  width: auto;
+  min-width: 100%;
+}
+
+.markdown-content td,
+.markdown-content th {
+  padding: 0.5rem 1rem;
+}
+
+/* Force table container to respect bounds */
+.markdown-content > div {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Ensure tables don't break layout */
+.chat-message-content {
+  max-width: 100%;
+  overflow-x: hidden;
+  word-wrap: break-word;
+}
+
+.chat-message-content .overflow-x-auto {
+  max-width: 100%;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar for tables */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Absolute table containment */
+.markdown-content .overflow-x-auto {
+  display: block !important;
+  max-width: calc(100vw - 4rem) !important;
+  overflow-x: auto !important;
+}
+
+@media (min-width: 640px) {
+  .markdown-content .overflow-x-auto {
+    max-width: calc(100vw - 8rem) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .markdown-content .overflow-x-auto {
+    max-width: calc(100vw - 24rem) !important;
+  }
+}
+
+/* Prevent any element from breaking layout */
+.chat-message-content * {
+  max-width: 100%;
+}
