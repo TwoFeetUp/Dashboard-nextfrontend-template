@@ -1,7 +1,7 @@
-# Olympisch Stadion AI Assistants – Agent Overview
+# AI Assistant Template – Agent Overview
 
 ## Purpose
-- Internal platform for Olympisch Stadion staff to work with task-specific AI assistants (contract review, event planning, marketing support, etc.).
+- Template platform for building internal AI assistants for task-specific workflows (contract review, event planning, marketing support, etc.).
 - Combines conversational workflows with document OCR, voice transcription, and PocketBase-backed session history.
 
 ## Front-End Experience (Next.js App Router)

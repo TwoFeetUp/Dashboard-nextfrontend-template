@@ -1,6 +1,6 @@
-# Olympisch Stadion AI Assistants
+# AI Assistant Template
 
-This is a Next.js project for Olympisch Stadion AI Assistants platform.
+This is a Next.js project for AI assistant platforms.
 
 ## Getting Started
 

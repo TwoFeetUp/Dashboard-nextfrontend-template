@@ -38,10 +38,9 @@ import {
 
 } from "@/components/ui/dropdown-menu"
 
-import { FileText, Calendar, FileCheck, Megaphone, AlertCircle, Euro } from "lucide-react"
+import { FileText, Calendar, FileCheck, Megaphone, AlertCircle } from "lucide-react"
 
 import { ChatInterfaceEnhanced } from "@/components/chat-interface-enhanced"
-import { FacturatieTool } from "@/components/facturatie"
 
 import { BrandLogo } from "@/components/branding/brand-logo"
 
@@ -118,7 +117,7 @@ export default function HomePage() {
 
         email: user.email,
 
-        company: "Olympisch Stadion",
+        company: "Your Company",
 
         role: (user as any).role || "medewerker",
 
@@ -306,7 +305,7 @@ export default function HomePage() {
 
                   type="email"
 
-                  placeholder="naam@olympischstadion.nl"
+                  placeholder="name@company.com"
 
                   value={email}
 
@@ -498,18 +497,6 @@ function Dashboard({
 
     },
 
-    {
-
-      id: "facturatie-tool",
-
-      name: "Facturatie & Leden",
-
-      description: "Beheer leden en verstuur facturatiegegevens",
-
-      icon: Euro,
-
-    },
-
   ]
 
 
@@ -661,8 +648,6 @@ function Dashboard({
             <ChatInterfaceEnhanced toolName="Marketing en Communicatie" toolId="marketing-communicatie" />
 
           )}
-
-          {selectedTool === "facturatie-tool" && <FacturatieTool />}
 
         </main>
 

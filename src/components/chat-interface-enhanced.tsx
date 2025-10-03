@@ -26,9 +26,9 @@ interface ChatInterfaceEnhancedProps {
 
 const SUGGESTION_PRESETS: Record<string, string[]> = {
   "contract-clearance": [
-    "Kun je deze arbeidsovereenkomst controleren op risico's voor het Olympisch Stadion?",
-    "Dit zakelijke contract voelt scheef; welke risico's zie je voor het stadion?",
-    "Ik wil een arbeidsovereenkomst invullen vanuit het OS-template, kun je dat doen?"
+    "Kun je deze arbeidsovereenkomst controleren op risico's voor mijn organisatie?",
+    "Dit zakelijke contract voelt scheef; welke risico's zie je?",
+    "Ik wil een arbeidsovereenkomst invullen vanuit ons template, kun je dat doen?"
   ],
   "event-planner": [
     "Ik organiseer een bedrijfscongres op 12 oktober, kun je een draaiboek maken?",

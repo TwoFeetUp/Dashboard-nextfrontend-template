@@ -10,8 +10,8 @@ import "./globals.css"
 import "@/components/styles.css"
 
 export const metadata: Metadata = {
-  title: "Olympisch Stadion Dashboard",
-  description: "Dashboard voor het Olympisch Stadion Amsterdam",
+  title: "AI Assistant Dashboard",
+  description: "AI-powered assistant dashboard",
   generator: "v0.app",
 }
 

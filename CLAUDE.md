@@ -1,11 +1,11 @@
-# Olympisch Stadion AI Assistant Platform
+# AI Assistant Template Platform
 
-This project is for Olympisch stadion, who want a few AI assistants.
+This is a Next.js template project for building AI assistant platforms.
 
 ## Project Structure
 
 ```
-olympisch/
+ai-assistant-template/
 ├── src/                         # Main source code directory
 │   ├── app/                     # Next.js app router directory
 │   │   ├── api/                 # API routes for backend functionality

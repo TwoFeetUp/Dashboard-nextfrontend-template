@@ -12,8 +12,8 @@ export function BrandLogo({ showText = true, className, imageClassName }: BrandL
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <Image
-        src="/branding/olympisch-stadion-logo.png"
-        alt="Olympisch Stadion logo"
+        src="/branding/logo.png"
+        alt="Company logo"
         width={48}
         height={48}
         priority
@@ -21,8 +21,8 @@ export function BrandLogo({ showText = true, className, imageClassName }: BrandL
       />
       {showText ? (
         <div className="flex flex-col leading-tight">
-          <span className="text-base font-semibold text-gray-900">Olympisch Stadion</span>
-          <span className="text-xs uppercase tracking-wide text-gray-500">Amsterdam</span>
+          <span className="text-base font-semibold text-gray-900">[COMPANY_NAME]</span>
+          <span className="text-xs uppercase tracking-wide text-gray-500">[LOCATION]</span>
         </div>
       ) : null}
     </div>
