@@ -189,18 +189,29 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
 
     // Save user message to PocketBase - NOW WITH THE CORRECT conversationId!
     const authUserId = pb.authStore.model?.id
+    console.log('[DEBUG] Attempting to save user message:', {
+      activeConversationId,
+      authUserId,
+      hasContent: !!userMessage.content
+    })
+
     if (activeConversationId && authUserId) {
       try {
-        await pb.collection('messages').create({
+        const savedMessage = await pb.collection('messages').create({
           conversationId: activeConversationId,
           role: 'user',
           content: userMessage.content,
           userId: authUserId
         })
-        console.log('User message saved to PocketBase:', userMessage.content.substring(0, 50))
+        console.log('[SUCCESS] User message saved to PocketBase:', savedMessage.id)
       } catch (error) {
-        console.error('Failed to save user message:', error)
+        console.error('[ERROR] Failed to save user message:', error)
       }
+    } else {
+      console.error('[ERROR] Cannot save message - missing:', {
+        hasConversationId: !!activeConversationId,
+        hasUserId: !!authUserId
+      })
     }
     
     try {
@@ -322,17 +333,24 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
       }
       
       // Save assistant message to PocketBase - use activeConversationId
+      console.log('[DEBUG] Attempting to save assistant message:', {
+        activeConversationId,
+        authUserId,
+        messageLength: assistantMessage.length
+      })
+
       if (activeConversationId && authUserId && assistantMessage) {
         try {
-          await pb.collection('messages').create({
+          const savedMessage = await pb.collection('messages').create({
             conversationId: activeConversationId,
             role: 'assistant',
             content: assistantMessage,
             userId: authUserId
           })
+          console.log('[SUCCESS] Assistant message saved to PocketBase:', savedMessage.id)
           
-          // Update conversation's last message
-          await pb.collection('conversations').update(conversationId, {
+          // Update conversation's last message - use activeConversationId
+          await pb.collection('conversations').update(activeConversationId, {
             lastMessage: assistantMessage.substring(0, 100)
           })
         } catch (error) {
