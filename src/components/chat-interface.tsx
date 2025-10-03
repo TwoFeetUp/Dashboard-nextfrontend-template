@@ -62,12 +62,24 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     }
   }, [toolId])
 
-  // Load sessions from PocketBase
+  // Load sessions from PocketBase and auto-load the most recent one
   useEffect(() => {
     if (user) {
-      loadSessions()
+      loadSessions().then(async () => {
+        // Auto-load the most recent session if we don't have one selected
+        if (!currentSession && sessions.length > 0) {
+          await loadSession(sessions[0])
+        }
+      })
     }
   }, [user, toolId, loadSessions])
+
+  // Auto-load most recent session when sessions are loaded
+  useEffect(() => {
+    if (sessions.length > 0 && !currentSession && user) {
+      loadSession(sessions[0])
+    }
+  }, [sessions, currentSession, user])
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
