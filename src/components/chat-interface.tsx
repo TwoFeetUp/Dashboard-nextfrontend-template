@@ -86,23 +86,23 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     }
   }, [messages])
 
-  const createNewSession = async () => {
+  const createNewSession = async (): Promise<string | null> => {
     if (!user) {
       console.error('No user found for creating session')
-      return
+      return null
     }
-    
+
     try {
       // Get the current authenticated user ID from PocketBase
       const authUserId = pb.authStore.model?.id
-      
+
       if (!authUserId) {
         console.error('No authenticated user ID found')
-        return
+        return null
       }
-      
+
       console.log('Creating conversation with userId:', authUserId)
-      
+
       const conversation = await pb.collection('conversations').create({
         title: `${toolName} - ${new Date().toLocaleDateString('nl-NL')}`,
         userId: authUserId,  // Use the auth user ID directly from PocketBase
@@ -110,7 +110,7 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
         isActive: true,
         lastMessage: ''
       })
-      
+
       const newSession: ChatSession = {
         id: conversation.id,
         name: conversation.title,
@@ -118,13 +118,17 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
         messageCount: 0,
         conversationId: conversation.id
       }
-      
+
       setSessions([newSession, ...sessions])
       setCurrentSession(newSession)
       setConversationId(conversation.id)
       setMessages([])
+
+      // Return the conversation ID immediately so caller can use it
+      return conversation.id
     } catch (error) {
       console.error('Failed to create session:', error)
+      return null
     }
   }
 
@@ -156,33 +160,44 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!localInput?.trim() || isLoading) return
-    
-    // Create session if none exists
+
+    // Create session if none exists and get the conversation ID
+    let activeConversationId = conversationId
     if (!currentSession && user) {
-      await createNewSession()
+      const newConvoId = await createNewSession()
+      if (newConvoId) {
+        activeConversationId = newConvoId
+      }
     }
-    
+
+    // If still no conversationId after creating session, something is wrong
+    if (!activeConversationId) {
+      console.error('No conversation ID available')
+      return
+    }
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: localInput
     }
-    
+
     // Add message to UI immediately
     setMessages(prev => [...prev, userMessage])
     setLocalInput('')
     setIsLoading(true)
-    
-    // Save user message to PocketBase
+
+    // Save user message to PocketBase - NOW WITH THE CORRECT conversationId!
     const authUserId = pb.authStore.model?.id
-    if (conversationId && authUserId) {
+    if (activeConversationId && authUserId) {
       try {
         await pb.collection('messages').create({
-          conversationId: conversationId,
+          conversationId: activeConversationId,
           role: 'user',
           content: userMessage.content,
           userId: authUserId
         })
+        console.log('User message saved to PocketBase:', userMessage.content.substring(0, 50))
       } catch (error) {
         console.error('Failed to save user message:', error)
       }
@@ -199,7 +214,7 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
         body: JSON.stringify({
           messages: [...messages, userMessage],
           assistantType: toolId,
-          conversation_id: conversationId
+          conversation_id: activeConversationId  // Use activeConversationId
         })
       })
       
@@ -306,11 +321,11 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
         }
       }
       
-      // Save assistant message to PocketBase
-      if (conversationId && authUserId && assistantMessage) {
+      // Save assistant message to PocketBase - use activeConversationId
+      if (activeConversationId && authUserId && assistantMessage) {
         try {
           await pb.collection('messages').create({
-            conversationId: conversationId,
+            conversationId: activeConversationId,
             role: 'assistant',
             content: assistantMessage,
             userId: authUserId

@@ -1,15 +1,16 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Trash2 } from "lucide-react"
+import { Trash2, Pencil, Check, X } from "lucide-react"
 import { toast } from "sonner"
 import { useChatOCREnhanced } from "@/hooks/use-chat-ocr-enhanced"
 import ChatContainer from "./chat-container"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/hooks/use-auth"
-import { deleteConversation } from "@/lib/conversation"
+import { deleteConversation, updateConversationTitle } from "@/lib/conversation"
 import pb from "@/lib/pocketbase"
+import { Input } from "@/components/ui/input"
 
 interface ChatSession {
   id: string
@@ -59,6 +60,8 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [sessionToDelete, setSessionToDelete] = useState<ChatSession | null>(null)
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null)
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState("")
 
   const handleChatError = useCallback((error: Error) => {
     console.error('Chat error:', error)
@@ -203,6 +206,48 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
     }
   }
 
+  const startEditingName = (session: ChatSession) => {
+    setEditingSessionId(session.id)
+    setEditingName(session.name)
+  }
+
+  const cancelEditingName = () => {
+    setEditingSessionId(null)
+    setEditingName("")
+  }
+
+  const saveEditedName = async () => {
+    if (!editingSessionId || !editingName.trim()) return
+
+    try {
+      await updateConversationTitle(editingSessionId, editingName.trim())
+
+      setSessions((previous) =>
+        previous.map((session) =>
+          session.id === editingSessionId
+            ? { ...session, name: editingName.trim() }
+            : session
+        )
+      )
+
+      if (currentSession?.id === editingSessionId) {
+        setCurrentSession({ ...currentSession, name: editingName.trim() })
+      }
+
+      toast.success('Naam bijgewerkt')
+    } catch (error: any) {
+      console.error('Failed to update conversation name:', error)
+      if (error?.status === 401) {
+        await logout()
+      } else {
+        toast.error('Kon naam niet bijwerken')
+      }
+    } finally {
+      setEditingSessionId(null)
+      setEditingName("")
+    }
+  }
+
   const exportToText = () => {
     if (!currentSession) return
     
@@ -284,43 +329,114 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
             {sessions.map((session) => {
               const isActive = currentSession?.id === session.id
               const showConfirm = sessionToDelete?.id === session.id
-              const deleteButtonClasses = (showConfirm || isActive)
+              const isEditing = editingSessionId === session.id
+              const actionButtonClasses = (showConfirm || isActive)
                 ? "self-start text-gray-400 hover:text-[#ff7200] transition-opacity"
                 : "self-start text-gray-400 hover:text-[#ff7200] transition-opacity opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
 
               return (
                 <div
                   key={session.id}
-                  className={`group grid grid-cols-[1fr_auto] items-start gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                  className={`group grid grid-cols-[1fr_auto_auto] items-start gap-2 p-2 rounded-lg ${!isEditing ? 'cursor-pointer' : ''} transition-colors ${
                     isActive
                       ? "bg-[#ffe3d1] border border-[#ffa366]"
                       : "bg-gray-50 hover:bg-gray-100"
                   }`}
-                  onClick={() => loadSession(session)}
+                  onClick={() => !isEditing && loadSession(session)}
                 >
                   <div className="min-w-0">
-                    <div className="font-medium text-xs text-gray-900 truncate">{session.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {session.createdAt.toLocaleDateString("nl-NL")}
-                    </div>
+                    {isEditing ? (
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="h-6 text-xs px-2"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              void saveEditedName()
+                            } else if (e.key === 'Escape') {
+                              cancelEditingName()
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="font-medium text-xs text-gray-900 truncate">{session.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {session.createdAt.toLocaleDateString("nl-NL")}
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className={deleteButtonClasses}
-                    aria-label="Verwijder chat"
-                    title="Verwijder chat"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      toggleDeletePrompt(session)
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  {showConfirm && (
+                  {isEditing ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="self-start text-green-600 hover:text-green-700 h-6 w-6"
+                        aria-label="Opslaan"
+                        title="Opslaan"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void saveEditedName()
+                        }}
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="self-start text-red-600 hover:text-red-700 h-6 w-6"
+                        aria-label="Annuleren"
+                        title="Annuleren"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          cancelEditingName()
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className={actionButtonClasses}
+                        aria-label="Naam bewerken"
+                        title="Naam bewerken"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          startEditingName(session)
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className={actionButtonClasses}
+                        aria-label="Verwijder chat"
+                        title="Verwijder chat"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          toggleDeletePrompt(session)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                  {showConfirm && !isEditing && (
                     <div
-                      className="col-span-2 mt-2 rounded-md border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-sm"
+                      className="col-span-3 mt-2 rounded-md border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-sm"
                       onClick={(event) => event.stopPropagation()}
                     >
                       <p className="font-medium text-gray-800">Chat verwijderen?</p>
