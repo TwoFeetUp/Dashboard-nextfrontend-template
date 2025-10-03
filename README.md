@@ -250,20 +250,72 @@ POST /chat/stream
 
 ## Architecture
 
+### Multi-Agent System
+
+The template uses a **multi-agent architecture** where each tool has its own dedicated AI agent:
+
 ```
-┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
-│   Next.js       │─────▶│  Pydantic AI     │─────▶│   DeepInfra     │
-│   Frontend      │      │  Agent Backend   │      │   (GLM-4.5)     │
-│   :3000         │      │  :8000           │      └─────────────────┘
-└────────┬────────┘      └────────┬─────────┘
-         │                        │
-         │                        │
-         ▼                        ▼
-┌─────────────────┐      ┌─────────────────┐
-│   PocketBase    │      │   MCP Servers   │
-│   Database      │      │   (Context7)    │
-└─────────────────┘      └─────────────────┘
+                                    Frontend (Next.js :3000)
+                                            │
+                    ┌───────────────────────┼───────────────────────┐
+                    │                       │                       │
+                    ▼                       ▼                       ▼
+            Tool Selection          /api/agent Proxy        PocketBase
+         (assistantType param)    (Routes to correct       (Conversations
+                                      agent)                & Messages)
+                                            │
+        ┌───────────────────────────────────┼───────────────────────────────┐
+        │                                   │                               │
+        │           Agent Backend (FastAPI :8000)                           │
+        │                                   │                               │
+        │    ┌──────────────────────────────┴────────────────────────┐     │
+        │    │              AgentRegistry (Router)                    │     │
+        │    │   Maps assistantType → Correct Agent Instance         │     │
+        │    └──────────────────────────┬────────────────────────────┘     │
+        │                               │                                   │
+        │         ┌────────────────────┼────────────────────┐              │
+        │         │                    │                    │              │
+        │         ▼                    ▼                    ▼              │
+        │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │
+        │  │ contract-   │     │   event-    │     │  marketing- │  ...  │
+        │  │ clearance   │     │   planner   │     │ communicatie│       │
+        │  │   Agent     │     │   Agent     │     │    Agent    │       │
+        │  └─────────────┘     └─────────────┘     └─────────────┘       │
+        │         │                    │                    │              │
+        └─────────┼────────────────────┼────────────────────┼──────────────┘
+                  │                    │                    │
+                  └────────────────────┴────────────────────┘
+                                       │
+                              ┌────────┴─────────┐
+                              ▼                  ▼
+                      ┌──────────────┐   ┌─────────────┐
+                      │  DeepInfra   │   │ Context7 MCP│
+                      │  (GLM-4.5)   │   │   Server    │
+                      └──────────────┘   └─────────────┘
 ```
+
+### Agent Specialization
+
+Each agent has:
+- **Unique System Prompt** - Defines personality and expertise
+- **Custom Tools** - Specific MCP tools for its domain
+- **Isolated Context** - Separate conversation history per tool
+
+| Tool ID | Agent | Specialization |
+|---------|-------|----------------|
+| `contract-clearance` | ContractClearanceAgent | Legal contract review, compliance checks |
+| `event-planner` | EventPlannerAgent | Event logistics, draaiboeken, planning |
+| `event-contract-assistant` | EventContractAgent | Event-specific contract drafting |
+| `marketing-communicatie` | MarketingAgent | Marketing copy, communications |
+
+### Request Flow
+
+1. **Frontend** → User selects tool → Sets `assistantType` parameter
+2. **Proxy** → `/api/agent` receives request with `assistantType`
+3. **Backend** → AgentRegistry routes to correct agent
+4. **Agent** → Processes with specialized prompt and tools
+5. **Response** → Streams back via SSE to frontend
+6. **Database** → Saves to PocketBase with tool isolation
 
 ## Troubleshooting
 

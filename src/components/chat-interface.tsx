@@ -62,24 +62,19 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     }
   }, [toolId])
 
-  // Load sessions from PocketBase and auto-load the most recent one
+  // Load sessions from PocketBase on mount or tool change
   useEffect(() => {
     if (user) {
-      loadSessions().then(async () => {
-        // Auto-load the most recent session if we don't have one selected
-        if (!currentSession && sessions.length > 0) {
-          await loadSession(sessions[0])
-        }
-      })
+      loadSessions()
     }
   }, [user, toolId, loadSessions])
 
-  // Auto-load most recent session when sessions are loaded
+  // Auto-load most recent session when sessions are loaded and no session is selected
   useEffect(() => {
     if (sessions.length > 0 && !currentSession && user) {
       loadSession(sessions[0])
     }
-  }, [sessions, currentSession, user])
+  }, [sessions, currentSession, user, loadSession])
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -133,29 +128,30 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     }
   }
 
-  const loadSession = async (session: ChatSession) => {
+  const loadSession = useCallback(async (session: ChatSession) => {
     if (!session.conversationId || !user) return
-    
+
     setCurrentSession(session)
     setConversationId(session.conversationId)
-    
+
     try {
       const messages = await pb.collection('messages').getList(1, 100, {
         filter: `conversationId = "${session.conversationId}"`,
-        // Remove sort since messages collection doesn't have created field
+        sort: 'created', // Sort by creation time to preserve message order
       })
-      
+
       const loadedMessages: ChatMessage[] = messages.items.map(msg => ({
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
       }))
-      
+
       setMessages(loadedMessages)
     } catch (error) {
       console.error('Failed to load messages:', error)
+      setMessages([]) // Clear messages on error to show empty state
     }
-  }
+  }, [user])
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
