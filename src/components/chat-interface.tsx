@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/hooks/use-auth"
 import pb from "@/lib/pocketbase"
-import { MemoizedMarkdown } from "@/components/memoized-markdown"
 import { agentConfig } from "@/lib/agent-config"
+import { ChatInputForm } from "@/components/chat-input-form"
+import { ChatMessagesList } from "@/components/chat-messages-list"
 
 interface ChatSession {
   id: string
@@ -33,7 +33,6 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
-  const [localInput, setLocalInput] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
@@ -157,9 +156,8 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     }
   }, [user])
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!localInput?.trim() || isLoading) return
+  const handleMessageSubmit = async (messageContent: string) => {
+    if (isLoading) return
 
     // Create session if none exists and get the conversation ID
     let activeConversationId = conversationId
@@ -179,12 +177,11 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: localInput
+      content: messageContent
     }
 
     // Add message to UI immediately
     setMessages(prev => [...prev, userMessage])
-    setLocalInput('')
     setIsLoading(true)
 
     // Save user message to PocketBase - NOW WITH THE CORRECT conversationId!
@@ -457,72 +454,16 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
                     <p className="text-sm">Stel me een vraag om te beginnen</p>
                   </div>
                 )}
-                {messages.map((message) => (
-                  <div key={message.id} className="group">
-                    {message.role === "user" ? (
-                      <div className="flex justify-end">
-                        <div className="max-w-xl bg-[#ff7200] text-white p-3 rounded-lg">
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center">
-                            <div className="w-4 h-4 bg-gray-600 rounded"></div>
-                          </div>
-                          <span className="text-xs font-medium text-gray-600">AI Assistent</span>
-                        </div>
-                        <div className="pl-9">
-                          <div className="prose prose-sm max-w-none text-gray-900">
-                            <MemoizedMarkdown 
-                              id={message.id} 
-                              content={message.content} 
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {isLoading && messages[messages.length - 1]?.content === '' && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-100 text-gray-900 p-3 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.1s" }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.2s" }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <ChatMessagesList messages={messages} isLoading={isLoading} />
               </div>
             </ScrollArea>
 
             {/* Input area */}
-            <form onSubmit={handleFormSubmit} className="p-4 border-t border-gray-200">
-              <div className="flex space-x-2">
-                <Input
-                  value={localInput}
-                  onChange={(e) => setLocalInput(e.target.value)}
-                  placeholder={`Stel een vraag aan je ${toolName} assistent...`}
-                  disabled={isLoading}
-                />
-                <Button
-                  type="submit"
-                  disabled={!localInput || !localInput.trim() || isLoading}
-                  className="bg-[#ff7200] hover:bg-[#e56700]"
-                >
-                  Verstuur
-                </Button>
-              </div>
-            </form>
+            <ChatInputForm
+              onSubmit={handleMessageSubmit}
+              isLoading={isLoading}
+              placeholder={`Stel een vraag aan je ${toolName} assistent...`}
+            />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">

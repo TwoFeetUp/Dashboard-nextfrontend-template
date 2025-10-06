@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic'
 interface AgentRequest {
   message: string
   conversation_id?: string
+  conversationId?: string
   messages?: Array<{ role: string; content: string }>
 }
 
@@ -28,12 +29,16 @@ export async function POST(req: NextRequest) {
     // Get agent backend URL from environment
     const agentUrl = process.env.NEXT_PUBLIC_AGENT_API_URL || 'http://localhost:8000'
 
-    // Extract the last message and assistantType
+    // Extract the last message, conversation id and assistantType
     const message = body.messages
-      ? body.messages[body.messages.length - 1].content
+      ? body.messages[body.messages.length - 1]?.content
       : body.message
 
     const assistantType = (body as any).assistantType
+    const rawConversationId = (body as any).conversation_id ?? (body as any).conversationId
+    const conversationId = typeof rawConversationId === 'string' && rawConversationId.trim()
+      ? rawConversationId
+      : 'default'
 
     if (!message) {
       return Response.json(
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         message,
-        conversation_id: body.conversation_id || 'default',
+        conversation_id: conversationId,
         agent: assistantType // Pass the agent type for routing
       })
     })

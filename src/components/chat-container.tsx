@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Brain, Loader2 } from 'lucide-react'
 import { useAutoScroll } from '../hooks/use-auto-scroll'
 import DragDropZone from './drag-drop-zone'
@@ -74,6 +74,34 @@ export default function ChatContainer({
     onSuggestionClick?.(suggestion)
   }
 
+  const messageList = useMemo(() => {
+    if (messages.length === 0) {
+      return null
+    }
+
+    const showAssistantLoader = isLoading && messages[messages.length - 1]?.role !== 'assistant'
+
+    return (
+      <div className="space-y-3 pb-4 max-w-full overflow-hidden">
+        {messages.map((message, index) => (
+          <ChatMessage
+            key={message.id}
+            message={message}
+            isStreaming={isLoading && index === messages.length - 1}
+            isLatest={index === messages.length - 1}
+          />
+        ))}
+        {showAssistantLoader && (
+          <div className="flex justify-start">
+            <div className="bg-muted px-4 py-3 rounded-xl">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }, [messages, isLoading])
+
   return (
     <div className="flex-1 bg-gray-50 border-r border-gray-200 flex flex-col h-full overflow-hidden">
       <div 
@@ -90,23 +118,7 @@ export default function ChatContainer({
             onSelectSuggestion={handleSuggestionSelection}
           />
         ) : (
-          <div className="space-y-3 pb-4 max-w-full overflow-hidden">
-            {messages.map((message, index) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                isStreaming={isLoading && index === messages.length - 1}
-                isLatest={index === messages.length - 1}
-              />
-            ))}
-            {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-              <div className="flex justify-start">
-                <div className="bg-muted px-4 py-3 rounded-xl">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              </div>
-            )}
-          </div>
+          messageList
         )}
       </div>
       

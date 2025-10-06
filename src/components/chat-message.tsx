@@ -1,8 +1,10 @@
 'use client'
 
+import { memo, useMemo } from 'react'
 import { MarkdownRenderer } from './markdown-renderer'
 import { ToolCallDisplay } from './tool-call-display'
-import type { Message } from '../lib/types'
+import { ThinkingIndicator } from './thinking-indicator'
+import type { Message, MessageEvent } from '../lib/types'
 import type { ToolCall } from '../lib/tools'
 
 interface ChatMessageProps {
@@ -11,7 +13,12 @@ interface ChatMessageProps {
   isLatest?: boolean
 }
 
-export default function ChatMessage({ message, isStreaming = false }: ChatMessageProps) {
+const ChatMessageComponent = ({ message, isStreaming = false }: ChatMessageProps) => {
+  const streamingContent = useMemo(() => {
+    if (!message.content) return ''
+    return isStreaming ? `${message.content}▊` : message.content
+  }, [message.content, isStreaming])
+
   // User messages stay in a bubble on the right
   if (message.role === 'user') {
     return (
@@ -27,7 +34,7 @@ export default function ChatMessage({ message, isStreaming = false }: ChatMessag
   return (
     <div className="w-full max-w-full overflow-hidden px-2 sm:px-4 md:px-6 lg:px-8 message-content">
       <div className="text-sm text-gray-800 max-w-full">
-        {!message.content && !message.toolCalls && isStreaming ? (
+        {!message.content && !message.toolCalls && !message.timeline && isStreaming ? (
           <div className="flex items-center gap-2 py-2">
             <div className="typing-indicator">
               <span></span>
@@ -36,17 +43,49 @@ export default function ChatMessage({ message, isStreaming = false }: ChatMessag
             </div>
             <span className="text-gray-400 text-xs ml-2">AI is thinking</span>
           </div>
+        ) : message.timeline && message.timeline.length > 0 ? (
+          <div className="space-y-3">
+            {/* Display events in chronological order from timeline */}
+            {message.timeline.map((event, index) => {
+              if (event.type === 'thinking') {
+                return (
+                  <ThinkingIndicator
+                    key={`thinking-${index}`}
+                    reasoning={[event.content]}
+                    isThinking={event.isActive || false}
+                  />
+                )
+              } else if (event.type === 'tool_call') {
+                return (
+                  <ToolCallDisplay key={`tool-${index}`} toolCall={event.toolCall as ToolCall} />
+                )
+              } else if (event.type === 'text') {
+                return (
+                  <div key={`text-${index}`} className="leading-relaxed prose prose-sm max-w-none chat-message-content">
+                    <MarkdownRenderer content={event.content} />
+                  </div>
+                )
+              }
+              return null
+            })}
+          </div>
         ) : (
           <div className="space-y-3">
-            {/* Display tool calls if present */}
+            {/* Fallback to old grouped display */}
+            {(message.reasoning || message.isThinking) && (
+              <ThinkingIndicator
+                reasoning={message.reasoning || []}
+                isThinking={message.isThinking || false}
+              />
+            )}
+
             {message.toolCalls && message.toolCalls.map(toolCall => (
               <ToolCallDisplay key={toolCall.id} toolCall={toolCall as ToolCall} />
             ))}
-            
-            {/* Display message content */}
+
             {message.content && (
               <div className="leading-relaxed prose prose-sm max-w-none chat-message-content">
-                <MarkdownRenderer content={message.content + (isStreaming ? '▊' : '')} />
+                <MarkdownRenderer content={streamingContent} />
               </div>
             )}
           </div>
@@ -55,3 +94,11 @@ export default function ChatMessage({ message, isStreaming = false }: ChatMessag
     </div>
   )
 }
+
+export default memo(ChatMessageComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.message === nextProps.message &&
+    prevProps.isStreaming === nextProps.isStreaming &&
+    prevProps.isLatest === nextProps.isLatest
+  )
+})

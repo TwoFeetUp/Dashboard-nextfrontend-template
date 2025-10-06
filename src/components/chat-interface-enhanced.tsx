@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Trash2, Pencil, Check, X } from "lucide-react"
+import { Trash2, Pencil, Check, X, Menu } from "lucide-react"
 import { toast } from "sonner"
 import { useChatOCREnhanced } from "@/hooks/use-chat-ocr-enhanced"
 import ChatContainer from "./chat-container"
@@ -62,6 +62,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null)
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState("")
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const handleChatError = useCallback((error: Error) => {
     console.error('Chat error:', error)
@@ -161,6 +162,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
       setSessions((previous) => [newSession, ...previous])
       setCurrentSession(newSession)
       setConversationId(conversation.id)
+      setIsSidebarOpen(false)
     } catch (error: any) {
       console.error('Failed to create session:', error)
       if (error?.status === 401) {
@@ -175,6 +177,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
     setSessionToDelete(null)
     setCurrentSession(session)
     setConversationId(session.conversationId)
+    setIsSidebarOpen(false)
   }
 
   const toggleDeletePrompt = (session: ChatSession) => {
@@ -306,234 +309,301 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
     sendMessage(suggestion)
   }
 
+  const renderSessions = () => (
+    <ScrollArea className="flex-1 p-3">
+      <div className="space-y-1">
+        {sessions.map((session) => {
+          const isActive = currentSession?.id === session.id
+          const showConfirm = sessionToDelete?.id === session.id
+          const isEditing = editingSessionId === session.id
+          const actionButtonClasses = (showConfirm || isActive)
+            ? "self-start text-gray-400 hover:text-[#ff7200] transition-opacity"
+            : "self-start text-gray-400 hover:text-[#ff7200] transition-opacity opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
 
-  return (
-    <div className="flex h-[calc(100vh-8rem)] gap-4">
-      {/* Sidebar with chat sessions */}
-      <div className="w-64 bg-white rounded-lg border border-gray-200 flex flex-col">
-        <div className="p-3 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 text-sm">Geschiedenis</h3>
+          return (
+            <div
+              key={session.id}
+              className={`group grid grid-cols-[1fr_auto_auto] items-start gap-2 p-2 rounded-lg ${!isEditing ? 'cursor-pointer' : ''} transition-colors ${
+                isActive
+                  ? "bg-[#ffe3d1] border border-[#ffa366]"
+                  : "bg-gray-50 hover:bg-gray-100"
+              }`}
+              onClick={() => {
+                if (isEditing) return
+                void loadSession(session)
+              }}
+            >
+              <div className="min-w-0">
+                {isEditing ? (
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Input
+                      type="text"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      className="h-6 text-xs px-2"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          void saveEditedName()
+                        } else if (e.key === 'Escape') {
+                          cancelEditingName()
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="font-medium text-xs text-gray-900 truncate">{session.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {session.createdAt.toLocaleDateString("nl-NL")}
+                    </div>
+                  </>
+                )}
+              </div>
+              {isEditing ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="self-start text-green-600 hover:text-green-700 h-6 w-6"
+                    aria-label="Opslaan"
+                    title="Opslaan"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      void saveEditedName()
+                    }}
+                  >
+                    <Check className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="self-start text-red-600 hover:text-red-700 h-6 w-6"
+                    aria-label="Annuleren"
+                    title="Annuleren"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      cancelEditingName()
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className={actionButtonClasses}
+                    aria-label="Naam bewerken"
+                    title="Naam bewerken"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      startEditingName(session)
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className={actionButtonClasses}
+                    aria-label="Verwijder chat"
+                    title="Verwijder chat"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      toggleDeletePrompt(session)
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+              {showConfirm && !isEditing && (
+                <div
+                  className="col-span-3 mt-2 rounded-md border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-sm"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <p className="font-medium text-gray-800">Chat verwijderen?</p>
+                  <p className="text-[11px] text-gray-500">Deze actie kan niet ongedaan worden gemaakt.</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent"
+                      disabled={deletingSessionId === session.id}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        void handleConfirmDelete()
+                      }}
+                    >
+                      {deletingSessionId === session.id ? "Verwijderen..." : "Bevestigen"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setSessionToDelete(null)
+                      }}
+                    >
+                      Annuleren
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+        {sessions.length === 0 && (
+          <div className="text-center text-gray-500 py-8">
+            <p className="text-xs">Nog geen sessies</p>
+            <p className="text-xs mt-1">Klik op &quot;+ Nieuw&quot;</p>
+          </div>
+        )}
+      </div>
+    </ScrollArea>
+  )
+
+  const renderSidebar = (variant: 'desktop' | 'mobile') => (
+    <div className={`flex h-full flex-col bg-white ${variant === 'desktop' ? 'rounded-lg border border-gray-200' : ''}`}>
+      <div className="p-3 border-b border-gray-200">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold text-gray-900 text-sm">Geschiedenis</h3>
+          <div className="flex items-center gap-2">
             <Button
               size="sm"
               variant="default"
               className="bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent"
-              onClick={createNewSession}
+              onClick={() => { void createNewSession() }}
             >
               + Nieuw
             </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="lg:hidden h-8 w-8 text-gray-500 hover:text-gray-700"
+              aria-label="Sluit chatgeschiedenis"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-        <ScrollArea className="flex-1 p-3">
-          <div className="space-y-1">
-            {sessions.map((session) => {
-              const isActive = currentSession?.id === session.id
-              const showConfirm = sessionToDelete?.id === session.id
-              const isEditing = editingSessionId === session.id
-              const actionButtonClasses = (showConfirm || isActive)
-                ? "self-start text-gray-400 hover:text-[#ff7200] transition-opacity"
-                : "self-start text-gray-400 hover:text-[#ff7200] transition-opacity opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
-
-              return (
-                <div
-                  key={session.id}
-                  className={`group grid grid-cols-[1fr_auto_auto] items-start gap-2 p-2 rounded-lg ${!isEditing ? 'cursor-pointer' : ''} transition-colors ${
-                    isActive
-                      ? "bg-[#ffe3d1] border border-[#ffa366]"
-                      : "bg-gray-50 hover:bg-gray-100"
-                  }`}
-                  onClick={() => !isEditing && loadSession(session)}
-                >
-                  <div className="min-w-0">
-                    {isEditing ? (
-                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Input
-                          type="text"
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          className="h-6 text-xs px-2"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              void saveEditedName()
-                            } else if (e.key === 'Escape') {
-                              cancelEditingName()
-                            }
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <div className="font-medium text-xs text-gray-900 truncate">{session.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {session.createdAt.toLocaleDateString("nl-NL")}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {isEditing ? (
-                    <>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="self-start text-green-600 hover:text-green-700 h-6 w-6"
-                        aria-label="Opslaan"
-                        title="Opslaan"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          void saveEditedName()
-                        }}
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="self-start text-red-600 hover:text-red-700 h-6 w-6"
-                        aria-label="Annuleren"
-                        title="Annuleren"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          cancelEditingName()
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className={actionButtonClasses}
-                        aria-label="Naam bewerken"
-                        title="Naam bewerken"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          startEditingName(session)
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className={actionButtonClasses}
-                        aria-label="Verwijder chat"
-                        title="Verwijder chat"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          toggleDeletePrompt(session)
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                  {showConfirm && !isEditing && (
-                    <div
-                      className="col-span-3 mt-2 rounded-md border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-sm"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <p className="font-medium text-gray-800">Chat verwijderen?</p>
-                      <p className="text-[11px] text-gray-500">Deze actie kan niet ongedaan worden gemaakt.</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent"
-                          disabled={deletingSessionId === session.id}
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            void handleConfirmDelete()
-                          }}
-                        >
-                          {deletingSessionId === session.id ? "Verwijderen..." : "Bevestigen"}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setSessionToDelete(null)
-                          }}
-                        >
-                          Annuleren
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-            {sessions.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
-                <p className="text-xs">Nog geen sessies</p>
-                <p className="text-xs mt-1">Klik op &quot;+ Nieuw&quot;</p>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
       </div>
+      {renderSessions()}
+    </div>
+  )
 
-      {/* Main chat area */}
-      <div className="flex-1 bg-white rounded-lg border border-gray-200 flex flex-col">
-        {currentSession ? (
-          <>
-            {/* Chat header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-gray-900">{currentSession.name}</h3>
-                <p className="text-sm text-gray-500">{toolName} AI Assistent</p>
-              </div>
-              <div className="flex space-x-2">
-                <Button size="sm" variant="outline" onClick={exportToText}>
-                  Export TXT
-                </Button>
-              </div>
-            </div>
 
-            {/* Chat Component */}
-            <div className="flex-1 overflow-hidden">
-              <ChatContainer
-                messages={messages}
-                input={input}
-                setInput={setInput}
-                sendMessage={sendMessage}
-                isLoading={isLoading}
-                documents={documents}
-                onFileSelect={handleFileSelect}
-                onRemoveDocument={removeDocument}
-                onFilesDropped={handleFilesDropped}
-                uploadError={uploadError}
-                placeholder={getPlaceholder()}
-                enableVoice={true}
-                enableOCR={true}
-                suggestions={suggestions}
-                onSuggestionClick={handleSuggestionClick}
-              />
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center text-gray-500">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+  return (
+    <>
+      <div className="flex h-[calc(100vh-8rem)] flex-col gap-4 lg:flex-row">
+        <div className="hidden lg:flex lg:w-72">
+          {renderSidebar('desktop')}
+        </div>
+
+        <div className="flex-1 flex flex-col min-h-0">
+          {currentSession ? (
+            <>
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="lg:hidden text-gray-600 hover:text-gray-900"
+                      aria-label="Open chatgeschiedenis"
+                      onClick={() => setIsSidebarOpen(true)}
+                    >
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 leading-tight">{currentSession.name}</h3>
+                      <p className="text-sm text-gray-500">{toolName} AI Assistent</p>
+                    </div>
+                  </div>
+                  <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
+                    <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={exportToText}>
+                      Export TXT
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-hidden bg-white rounded-lg border border-gray-200">
+                <ChatContainer
+                  messages={messages}
+                  input={input}
+                  setInput={setInput}
+                  sendMessage={sendMessage}
+                  isLoading={isLoading}
+                  documents={documents}
+                  onFileSelect={handleFileSelect}
+                  onRemoveDocument={removeDocument}
+                  onFilesDropped={handleFilesDropped}
+                  uploadError={uploadError}
+                  placeholder={getPlaceholder()}
+                  enableVoice={true}
+                  enableOCR={true}
+                  suggestions={suggestions}
+                  onSuggestionClick={handleSuggestionClick}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center space-y-4 text-center text-gray-500">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                 <div className="w-6 h-6 bg-gray-400 rounded"></div>
               </div>
-              <p className="text-lg font-medium">Selecteer een chat of start een nieuwe</p>
-              <p className="text-sm">Kies een bestaande chat sessie of maak een nieuwe aan</p>
-              <Button onClick={createNewSession} variant="default" className="mt-4 bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent">
-                Start Nieuwe Chat
-              </Button>
+              <div>
+                <p className="text-lg font-medium">Selecteer een chat of start een nieuwe</p>
+                <p className="text-sm">Kies een bestaande chat sessie of maak een nieuwe aan</p>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <Button
+                  onClick={() => { void createNewSession() }}
+                  variant="default"
+                  className="bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent"
+                >
+                  Start Nieuwe Chat
+                </Button>
+                {sessions.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="lg:hidden"
+                    onClick={() => setIsSidebarOpen(true)}
+                  >
+                    <Menu className="mr-2 h-4 w-4" />
+                    Bekijk geschiedenis
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+
+      {isSidebarOpen && (
+        <div className="lg:hidden">
+          <div
+            className="fixed inset-0 z-40 bg-black/40"
+            aria-hidden="true"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+          <div className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85%] overflow-hidden rounded-r-lg bg-white shadow-xl">
+            {renderSidebar('mobile')}
+          </div>
+        </div>
+      )}
+    </>
   )
 }
