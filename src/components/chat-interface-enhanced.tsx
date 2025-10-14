@@ -504,7 +504,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
 
   return (
     <>
-      <div className="flex h-[calc(100vh-8rem)] flex-col gap-4 lg:flex-row">
+      <div className="flex h-full flex-col gap-4 lg:flex-row">
         <div className="hidden lg:flex lg:w-72">
           {renderSidebar('desktop')}
         </div>
@@ -512,7 +512,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
         <div className="flex-1 flex flex-col min-h-0">
           {currentSession ? (
             <>
-              <div className="p-4 border-b border-gray-200 bg-white">
+              <div className="p-4 border border-gray-200 rounded-t-lg bg-white border-b-0">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-3">
                     <Button
@@ -538,7 +538,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
                 </div>
               </div>
 
-              <div className="flex-1 overflow-hidden bg-white rounded-lg border border-gray-200">
+              <div className="flex-1 overflow-hidden bg-white rounded-b-lg border border-gray-200">
                 <ChatContainer
                   messages={messages}
                   input={input}
