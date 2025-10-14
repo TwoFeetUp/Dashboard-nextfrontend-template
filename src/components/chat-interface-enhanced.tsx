@@ -512,14 +512,14 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
         <div className="flex-1 flex flex-col min-h-0">
           {currentSession ? (
             <>
-              <div className="p-4 border-b border-gray-200">
+              <div className="p-4 border-b border-gray-200 bg-white">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-3">
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="lg:hidden text-gray-600 hover:text-gray-900"
+                      className="lg:hidden text-gray-600 hover:text-gray-900 bg-white"
                       aria-label="Open chatgeschiedenis"
                       onClick={() => setIsSidebarOpen(true)}
                     >
@@ -531,7 +531,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
                     </div>
                   </div>
                   <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
-                    <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={exportToText}>
+                    <Button size="sm" variant="outline" className="w-full sm:w-auto bg-white hover:bg-gray-50" onClick={exportToText}>
                       Export TXT
                     </Button>
                   </div>
