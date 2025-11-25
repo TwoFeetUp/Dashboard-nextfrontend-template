@@ -10,6 +10,15 @@ const config: Config = {
   theme: {
   	extend: {
   		colors: {
+  			// LHT Brand Colors
+  			lht: {
+  				black: '#000000',
+  				cream: '#f6f6ed',
+  				green: '#a1d981',
+  				orange: '#f6b682',
+  				yellow: '#f0e173',
+  			},
+  			// Theme colors (mapped to LHT palette)
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -50,6 +59,9 @@ const config: Config = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			}
+  		},
+  		fontFamily: {
+  			sans: ['Alergia Grotesk', 'system-ui', '-apple-system', 'sans-serif'],
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

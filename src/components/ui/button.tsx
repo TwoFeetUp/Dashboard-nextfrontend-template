@@ -19,6 +19,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // LHT brand button with sliding hover effect
+        lht: "btn-lht relative overflow-hidden bg-lht-black text-lht-cream border-2 border-lht-black font-medium",
       },
       size: {
         default: "h-9 px-4 py-2",

@@ -197,11 +197,11 @@ export default function HomePage() {
 
     return (
 
-      <div className="min-h-screen bg-gradient-to-br from-[#fff2e5] to-[#ffe5cc] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-lht-cream to-lht-cream flex items-center justify-center">
 
         <div className="text-center">
 
-          <div className="w-12 h-12 border-4 border-[#ff7200] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-lht-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
 
           <p className="text-gray-600">Loading...</p>
 
@@ -225,11 +225,11 @@ export default function HomePage() {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-[#fff2e5] to-[#ffe5cc]">
+    <div className="min-h-screen bg-gradient-to-br from-lht-cream to-lht-cream">
 
       {/* Header */}
 
-      <header className="bg-white border-b border-[#ffd1b0]">
+      <header className="bg-white border-b border-lht-black/20">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -239,7 +239,7 @@ export default function HomePage() {
 
             <div className="flex space-x-2">
 
-              <Button variant="outline" className="border-[#ffa366] text-[#ff7200] hover:bg-[#fff2e5] bg-transparent">
+              <Button variant="outline" className="border-lht-black text-lht-black hover:bg-lht-cream bg-transparent">
 
                 Registreren
 
@@ -359,7 +359,7 @@ export default function HomePage() {
 
               <div className="text-right">
 
-                <Button variant="link" className="text-[#ff7200] hover:text-[#e56700] p-0 h-auto">
+                <Button variant="link" className="text-lht-black hover:text-lht-black/70 p-0 h-auto">
 
                   Wachtwoord vergeten?
 
@@ -371,7 +371,7 @@ export default function HomePage() {
 
                 type="submit" 
 
-                className="w-full bg-[#ff7200] hover:bg-[#e56700] text-white"
+                className="w-full bg-lht-black hover:bg-lht-black/80 text-white"
 
                 disabled={isSubmitting || !email || !password}
 
@@ -401,7 +401,7 @@ export default function HomePage() {
 
               Nog geen account?{" "}
 
-              <Button variant="link" className="text-[#ff7200] hover:text-[#e56700] p-0 h-auto">
+              <Button variant="link" className="text-lht-black hover:text-lht-black/70 p-0 h-auto">
 
                 Registreren
 
@@ -569,7 +569,7 @@ function Dashboard({
 
                     <Button variant="ghost" className="flex items-center space-x-2 hover:bg-gray-100">
 
-                      <div className="w-8 h-8 bg-[#ff7200] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                      <div className="w-8 h-8 bg-lht-black rounded-full flex items-center justify-center text-white text-sm font-medium">
 
                         {userProfile.name.charAt(0)}
 
@@ -661,11 +661,11 @@ function Dashboard({
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-[#fff2e5] to-[#ffe5cc]">
+    <div className="min-h-screen bg-gradient-to-br from-lht-cream to-lht-cream">
 
       {/* Header */}
 
-      <header className="bg-white border-b border-[#ffd1b0]">
+      <header className="bg-white border-b border-lht-black/20">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -679,9 +679,9 @@ function Dashboard({
 
                 <DropdownMenuTrigger asChild>
 
-                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-[#fff2e5]">
+                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-lht-cream">
 
-                    <div className="w-8 h-8 bg-[#ff7200] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    <div className="w-8 h-8 bg-lht-black rounded-full flex items-center justify-center text-white text-sm font-medium">
 
                       {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
 
@@ -773,7 +773,7 @@ function Dashboard({
 
                 key={tool.id}
 
-                className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-[#ffd1b0] hover:border-[#ffa366] bg-white"
+                className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-lht-black/20 hover:border-lht-black bg-white"
 
                 onClick={() => setSelectedTool(tool.id)}
 
@@ -781,9 +781,9 @@ function Dashboard({
 
                 <CardHeader className="text-center">
 
-                  <div className="w-16 h-16 bg-[#ffe3d1] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-lht-green/30 rounded-full flex items-center justify-center mx-auto mb-4">
 
-                    <IconComponent className="w-8 h-8 text-[#ff7200]" />
+                    <IconComponent className="w-8 h-8 text-lht-black" />
 
                   </div>
 
@@ -889,11 +889,11 @@ function ProfileManagement({
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-[#fff2e5] to-[#ffe5cc]">
+    <div className="min-h-screen bg-gradient-to-br from-lht-cream to-lht-cream">
 
       {/* Header */}
 
-      <header className="bg-white border-b border-[#ffd1b0]">
+      <header className="bg-white border-b border-lht-black/20">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -915,7 +915,7 @@ function ProfileManagement({
 
               <div className="flex items-center space-x-2">
 
-                <div className="w-8 h-8 bg-[#ff7200] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                <div className="w-8 h-8 bg-lht-black rounded-full flex items-center justify-center text-white text-sm font-medium">
 
                   {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
 
@@ -937,7 +937,7 @@ function ProfileManagement({
 
                 onClick={onLogout}
 
-                className="border-[#ffa366] text-[#ff7200] hover:bg-[#fff2e5] bg-transparent"
+                className="border-lht-black text-lht-black hover:bg-lht-cream bg-transparent"
 
               >
 
@@ -1009,7 +1009,7 @@ function ProfileManagement({
 
               </div>
 
-              <Button onClick={handleSaveProfile} className="w-full bg-[#ff7200] hover:bg-[#e56700]">
+              <Button onClick={handleSaveProfile} className="w-full bg-lht-black hover:bg-lht-black/80">
 
                 Profiel Opslaan
 
@@ -1043,7 +1043,7 @@ function ProfileManagement({
 
                   variant="outline"
 
-                  className="w-full border-[#ffa366] text-[#ff7200] hover:bg-[#fff2e5]"
+                  className="w-full border-lht-black text-lht-black hover:bg-lht-cream"
 
                 >
 
@@ -1111,7 +1111,7 @@ function ProfileManagement({
 
                   <div className="flex space-x-2">
 
-                    <Button onClick={handlePasswordChange} className="flex-1 bg-[#ff7200] hover:bg-[#e56700]">
+                    <Button onClick={handlePasswordChange} className="flex-1 bg-lht-black hover:bg-lht-black/80">
 
                       Wachtwoord Wijzigen
 

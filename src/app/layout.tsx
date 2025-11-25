@@ -1,7 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { AuthProvider } from "@/providers/auth-provider"
@@ -10,9 +8,8 @@ import "./globals.css"
 import "@/components/styles.css"
 
 export const metadata: Metadata = {
-  title: "AI Assistant Dashboard",
-  description: "AI-powered assistant dashboard",
-  generator: "v0.app",
+  title: "LHT Dashboard",
+  description: "LHT AI-powered assistant dashboard",
 }
 
 export default function RootLayout({
@@ -22,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="nl">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} bg-background`}>
+      <body className="font-sans bg-lht-cream text-lht-black antialiased">
         <AuthProvider>
           <Suspense fallback={null}>{children}</Suspense>
         </AuthProvider>
