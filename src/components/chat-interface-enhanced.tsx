@@ -103,12 +103,12 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
       await logout()
       return
     }
-    
+
     try {
-      const safeUserId = sanitizeFilterValue(authUserId)
       const safeToolId = sanitizeFilterValue(toolId)
+      // Backend rules already filter by userId - we only need to filter by assistantType
       const records = await pb.collection('conversations').getList(1, 50, {
-        filter: `userId = "${safeUserId}" && assistantType = "${safeToolId}"`,
+        filter: `assistantType = "${safeToolId}"`,
         sort: '-created',
       })
       
@@ -129,10 +129,12 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
         data: error?.data,
         response: error?.response
       })
-      if (error?.status === 401 || error?.status === 400) {
+      // Only logout on 401 (unauthorized) - not on 400 (bad request)
+      if (error?.status === 401) {
         // Auth token invalid or expired - force re-login
         await logout()
       }
+      // For other errors, just log and continue - don't logout
     }
   }, [toolId, logout])
 

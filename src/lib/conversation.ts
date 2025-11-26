@@ -49,11 +49,10 @@ export interface CreateMessageData {
  */
 
 // Get all conversations for a user
+// Note: Backend rules already filter by userId, no client-side userId filter needed
 export async function getUserConversations(userId: string): Promise<Conversation[]> {
   try {
-    const safeUserId = sanitizeFilterValue(userId);
     const records = await pb.collection('conversations').getFullList({
-      filter: `userId = "${safeUserId}"`,
       sort: '-lastMessageAt',
     });
     
@@ -233,15 +232,15 @@ export async function updateConversationTitle(
 }
 
 // Search conversations
+// Note: Backend rules already filter by userId, no client-side userId filter needed
 export async function searchConversations(
   userId: string,
   query: string
 ): Promise<Conversation[]> {
   try {
-    const safeUserId = sanitizeFilterValue(userId);
     const safeQuery = sanitizeFilterValue(query);
     const records = await pb.collection('conversations').getFullList({
-      filter: `userId = "${safeUserId}" && (title ~ "${safeQuery}" || lastMessage ~ "${safeQuery}")`,
+      filter: `title ~ "${safeQuery}" || lastMessage ~ "${safeQuery}"`,
       sort: '-lastMessageAt',
     });
     

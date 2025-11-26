@@ -47,10 +47,10 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     if (!authUserId) return
 
     try {
-      const safeUserId = sanitizeFilterValue(authUserId)
       const safeToolId = sanitizeFilterValue(toolId)
+      // Backend rules already filter by userId - we only need to filter by assistantType
       const records = await pb.collection('conversations').getList(1, 50, {
-        filter: `userId = "${safeUserId}" && assistantType = "${safeToolId}"`,
+        filter: `assistantType = "${safeToolId}"`,
         sort: '-created',
       })
       
