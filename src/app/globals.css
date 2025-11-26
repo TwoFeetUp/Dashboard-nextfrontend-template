@@ -74,39 +74,29 @@ body {
 }
 
 /* ===========================================
-   LHT Button Sliding Hover Effect
+   LHT Button Styles - Modern & Simple
    =========================================== */
 .btn-lht {
-  position: relative;
-  overflow: hidden;
   background-color: #000000;
   color: #f6f6ed;
   border: 2px solid #000000;
-  transition: color 0.3s ease;
-}
-
-.btn-lht::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-color: #000000;
-  z-index: 0;
-  transition: transform 0.3s ease;
-  transform-origin: right;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .btn-lht:hover {
-  color: #000000;
+  background-color: #333333;
+  border-color: #333333;
 }
 
-.btn-lht:hover::before {
-  transform: scaleX(0);
-  transform-origin: left;
+.btn-lht:active {
+  background-color: #1a1a1a;
+  border-color: #1a1a1a;
 }
 
-.btn-lht > * {
-  position: relative;
-  z-index: 1;
+.btn-lht:disabled {
+  background-color: #666666;
+  border-color: #666666;
+  cursor: not-allowed;
 }
 
 /* LHT Interactive Elements - Sliding Hover */

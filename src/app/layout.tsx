@@ -8,8 +8,8 @@ import "./globals.css"
 import "@/components/styles.css"
 
 export const metadata: Metadata = {
-  title: "LHT Dashboard",
-  description: "LHT AI-powered assistant dashboard",
+  title: "Hoogtij Dashboard",
+  description: "Hoogtij AI-powered assistant dashboard",
 }
 
 export default function RootLayout({

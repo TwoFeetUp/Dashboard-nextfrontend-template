@@ -9,6 +9,11 @@ import { agentConfig } from "@/lib/agent-config"
 import { ChatInputForm } from "@/components/chat-input-form"
 import { ChatMessagesList } from "@/components/chat-messages-list"
 
+// Sanitize values for PocketBase filter queries to prevent injection
+const sanitizeFilterValue = (value: string): string => {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
 interface ChatSession {
   id: string
   name: string
@@ -40,10 +45,12 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
   const loadSessions = useCallback(async () => {
     const authUserId = pb.authStore.model?.id
     if (!authUserId) return
-    
+
     try {
+      const safeUserId = sanitizeFilterValue(authUserId)
+      const safeToolId = sanitizeFilterValue(toolId)
       const records = await pb.collection('conversations').getList(1, 50, {
-        filter: `userId = "${authUserId}" && assistantType = "${toolId}"`,
+        filter: `userId = "${safeUserId}" && assistantType = "${safeToolId}"`,
         sort: '-created',
       })
       
@@ -138,8 +145,9 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     setConversationId(session.conversationId)
 
     try {
+      const safeConversationId = sanitizeFilterValue(session.conversationId)
       const messages = await pb.collection('messages').getList(1, 100, {
-        filter: `conversationId = "${session.conversationId}"`,
+        filter: `conversationId = "${safeConversationId}"`,
         sort: 'created', // Sort by creation time to preserve message order
       })
 

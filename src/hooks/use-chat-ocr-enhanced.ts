@@ -5,6 +5,11 @@ import type { Message, MessageEvent, DocumentAttachment } from '../lib/types'
 import pb from '@/lib/pocketbase'
 import { useAuth } from '@/hooks/use-auth'
 
+// Sanitize values for PocketBase filter queries to prevent injection
+const sanitizeFilterValue = (value: string): string => {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
 interface UseChatOCREnhancedOptions {
   chatEndpoint?: string
   ocrEndpoint?: string
@@ -34,10 +39,11 @@ export function useChatOCREnhanced({
   // Load existing messages from PocketBase when conversation changes
   const loadMessages = useCallback(async () => {
     if (!conversationId) return
-    
+
     try {
+      const safeConversationId = sanitizeFilterValue(conversationId)
       const messages = await pb.collection('messages').getList(1, 200, {
-        filter: `conversationId = "${conversationId}"`,
+        filter: `conversationId = "${safeConversationId}"`,
         sort: 'created'
       })
 

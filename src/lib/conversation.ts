@@ -1,6 +1,12 @@
 import pb from '@/lib/pocketbase';
 import type { User } from '@/types/auth';
 
+// Sanitize values for PocketBase filter queries to prevent injection
+const sanitizeFilterValue = (value: string): string => {
+  // Escape double quotes and backslashes for PocketBase filter syntax
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+};
+
 // Conversation types
 export interface Message {
   id: string;
@@ -45,8 +51,9 @@ export interface CreateMessageData {
 // Get all conversations for a user
 export async function getUserConversations(userId: string): Promise<Conversation[]> {
   try {
+    const safeUserId = sanitizeFilterValue(userId);
     const records = await pb.collection('conversations').getFullList({
-      filter: `userId = "${userId}"`,
+      filter: `userId = "${safeUserId}"`,
       sort: '-lastMessageAt',
     });
     
@@ -112,8 +119,9 @@ export async function createConversation(data: CreateConversationData): Promise<
 export async function deleteConversation(conversationId: string): Promise<boolean> {
   try {
     // Delete related messages first to avoid required relation constraints
+    const safeConversationId = sanitizeFilterValue(conversationId);
     const messages = await pb.collection('messages').getFullList({
-      filter: `conversationId = "${conversationId}"`,
+      filter: `conversationId = "${safeConversationId}"`,
     });
 
     for (const message of messages) {
@@ -132,8 +140,9 @@ export async function deleteConversation(conversationId: string): Promise<boolea
 // Get messages for a conversation
 export async function getConversationMessages(conversationId: string): Promise<Message[]> {
   try {
+    const safeConversationId = sanitizeFilterValue(conversationId);
     const records = await pb.collection('messages').getFullList({
-      filter: `conversationId = "${conversationId}"`,
+      filter: `conversationId = "${safeConversationId}"`,
       // Remove sort since messages collection doesn't have created field
     });
     
@@ -229,8 +238,10 @@ export async function searchConversations(
   query: string
 ): Promise<Conversation[]> {
   try {
+    const safeUserId = sanitizeFilterValue(userId);
+    const safeQuery = sanitizeFilterValue(query);
     const records = await pb.collection('conversations').getFullList({
-      filter: `userId = "${userId}" && (title ~ "${query}" || lastMessage ~ "${query}")`,
+      filter: `userId = "${safeUserId}" && (title ~ "${safeQuery}" || lastMessage ~ "${safeQuery}")`,
       sort: '-lastMessageAt',
     });
     

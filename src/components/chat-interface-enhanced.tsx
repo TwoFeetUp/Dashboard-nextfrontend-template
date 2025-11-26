@@ -12,6 +12,12 @@ import { deleteConversation, updateConversationTitle } from "@/lib/conversation"
 import pb from "@/lib/pocketbase"
 import { Input } from "@/components/ui/input"
 
+// Sanitize values for PocketBase filter queries to prevent injection
+const sanitizeFilterValue = (value: string): string => {
+  // Escape double quotes and backslashes for PocketBase filter syntax
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
 interface ChatSession {
   id: string
   name: string
@@ -99,8 +105,10 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
     }
     
     try {
+      const safeUserId = sanitizeFilterValue(authUserId)
+      const safeToolId = sanitizeFilterValue(toolId)
       const records = await pb.collection('conversations').getList(1, 50, {
-        filter: `userId = "${authUserId}" && assistantType = "${toolId}"`,
+        filter: `userId = "${safeUserId}" && assistantType = "${safeToolId}"`,
         sort: '-created',
       })
       
@@ -115,7 +123,14 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
       setSessions(loadedSessions)
     } catch (error: any) {
       console.error('Failed to load sessions:', error)
-      if (error?.status === 401) {
+      console.error('Error details:', {
+        status: error?.status,
+        message: error?.message,
+        data: error?.data,
+        response: error?.response
+      })
+      if (error?.status === 401 || error?.status === 400) {
+        // Auth token invalid or expired - force re-login
         await logout()
       }
     }
@@ -317,16 +332,16 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
           const showConfirm = sessionToDelete?.id === session.id
           const isEditing = editingSessionId === session.id
           const actionButtonClasses = (showConfirm || isActive)
-            ? "self-start text-gray-400 hover:text-[#ff7200] transition-opacity"
-            : "self-start text-gray-400 hover:text-[#ff7200] transition-opacity opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
+            ? "self-start text-lht-black/40 hover:text-lht-black transition-opacity"
+            : "self-start text-lht-black/40 hover:text-lht-black transition-opacity opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
 
           return (
             <div
               key={session.id}
               className={`group grid grid-cols-[1fr_auto_auto] items-start gap-2 p-2 rounded-lg ${!isEditing ? 'cursor-pointer' : ''} transition-colors ${
                 isActive
-                  ? "bg-[#ffe3d1] border border-[#ffa366]"
-                  : "bg-gray-50 hover:bg-gray-100"
+                  ? "bg-lht-green/30 border border-lht-green"
+                  : "bg-lht-cream hover:bg-lht-green/10"
               }`}
               onClick={() => {
                 if (isEditing) return
@@ -353,8 +368,8 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
                   </div>
                 ) : (
                   <>
-                    <div className="font-medium text-xs text-gray-900 truncate">{session.name}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="font-medium text-xs text-lht-black truncate">{session.name}</div>
+                    <div className="text-xs text-lht-black/50">
                       {session.createdAt.toLocaleDateString("nl-NL")}
                     </div>
                   </>
@@ -425,16 +440,16 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
               )}
               {showConfirm && !isEditing && (
                 <div
-                  className="col-span-3 mt-2 rounded-md border border-gray-200 bg-white p-2 text-xs text-gray-700 shadow-sm"
+                  className="col-span-3 mt-2 rounded-md border border-lht-black/10 bg-white p-2 text-xs text-lht-black/70 shadow-sm"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  <p className="font-medium text-gray-800">Chat verwijderen?</p>
-                  <p className="text-[11px] text-gray-500">Deze actie kan niet ongedaan worden gemaakt.</p>
+                  <p className="font-medium text-lht-black">Chat verwijderen?</p>
+                  <p className="text-[11px] text-lht-black/50">Deze actie kan niet ongedaan worden gemaakt.</p>
                   <div className="mt-2 flex items-center gap-2">
                     <Button
                       type="button"
                       size="sm"
-                      className="bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent"
+                      variant="lht"
                       disabled={deletingSessionId === session.id}
                       onClick={(event) => {
                         event.stopPropagation()
@@ -461,7 +476,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
           )
         })}
         {sessions.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-lht-black/50 py-8">
             <p className="text-xs">Nog geen sessies</p>
             <p className="text-xs mt-1">Klik op &quot;+ Nieuw&quot;</p>
           </div>
@@ -471,15 +486,14 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
   )
 
   const renderSidebar = (variant: 'desktop' | 'mobile') => (
-    <div className={`flex h-full flex-col bg-white ${variant === 'desktop' ? 'rounded-lg border border-gray-200' : ''}`}>
-      <div className="p-3 border-b border-gray-200">
+    <div className={`flex h-full flex-col bg-white ${variant === 'desktop' ? 'rounded-lg border border-lht-black/10' : ''}`}>
+      <div className="p-3 border-b border-lht-black/10">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-semibold text-gray-900 text-sm">Geschiedenis</h3>
+          <h3 className="font-semibold text-lht-black text-sm">Geschiedenis</h3>
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              variant="default"
-              className="bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent"
+              variant="lht"
               onClick={() => { void createNewSession() }}
             >
               + Nieuw
@@ -488,7 +502,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
               type="button"
               variant="ghost"
               size="icon"
-              className="lg:hidden h-8 w-8 text-gray-500 hover:text-gray-700"
+              className="lg:hidden h-8 w-8 text-lht-black/50 hover:text-lht-black"
               aria-label="Sluit chatgeschiedenis"
               onClick={() => setIsSidebarOpen(false)}
             >
@@ -512,33 +526,33 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
         <div className="flex-1 flex flex-col min-h-0">
           {currentSession ? (
             <>
-              <div className="p-4 border border-gray-200 rounded-t-lg bg-white border-b-0">
+              <div className="p-4 border border-lht-black/10 rounded-t-lg bg-white border-b-0">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-3">
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="lg:hidden text-gray-600 hover:text-gray-900 bg-white"
+                      className="lg:hidden text-lht-black/60 hover:text-lht-black bg-white"
                       aria-label="Open chatgeschiedenis"
                       onClick={() => setIsSidebarOpen(true)}
                     >
                       <Menu className="h-5 w-5" />
                     </Button>
                     <div>
-                      <h3 className="font-semibold text-gray-900 leading-tight">{currentSession.name}</h3>
-                      <p className="text-sm text-gray-500">{toolName} AI Assistent</p>
+                      <h3 className="font-semibold text-lht-black leading-tight">{currentSession.name}</h3>
+                      <p className="text-sm text-lht-black/50">{toolName} AI Assistent</p>
                     </div>
                   </div>
                   <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
-                    <Button size="sm" variant="outline" className="w-full sm:w-auto bg-white hover:bg-gray-50" onClick={exportToText}>
+                    <Button size="sm" variant="outline" className="w-full sm:w-auto bg-white hover:bg-lht-cream" onClick={exportToText}>
                       Export TXT
                     </Button>
                   </div>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-hidden bg-white rounded-b-lg border border-gray-200">
+              <div className="flex-1 overflow-hidden bg-white rounded-b-lg border border-lht-black/10">
                 <ChatContainer
                   messages={messages}
                   input={input}
@@ -559,19 +573,18 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
               </div>
             </>
           ) : (
-            <div className="flex flex-1 flex-col items-center justify-center space-y-4 text-center text-gray-500">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                <div className="w-6 h-6 bg-gray-400 rounded"></div>
+            <div className="flex flex-1 flex-col items-center justify-center space-y-4 text-center text-lht-black/50">
+              <div className="w-12 h-12 bg-lht-green/30 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-lht-green rounded"></div>
               </div>
               <div>
-                <p className="text-lg font-medium">Selecteer een chat of start een nieuwe</p>
+                <p className="text-lg font-medium text-lht-black">Selecteer een chat of start een nieuwe</p>
                 <p className="text-sm">Kies een bestaande chat sessie of maak een nieuwe aan</p>
               </div>
               <div className="flex flex-col items-center gap-3">
                 <Button
                   onClick={() => { void createNewSession() }}
-                  variant="default"
-                  className="bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent"
+                  variant="lht"
                 >
                   Start Nieuwe Chat
                 </Button>

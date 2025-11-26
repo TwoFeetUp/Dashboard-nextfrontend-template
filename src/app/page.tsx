@@ -38,9 +38,11 @@ import {
 
 } from "@/components/ui/dropdown-menu"
 
-import { FileText, Calendar, FileCheck, Megaphone, AlertCircle } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 
 import { ChatInterfaceEnhanced } from "@/components/chat-interface-enhanced"
+
+import { getEnabledAgents } from "@/config/agents"
 
 import { BrandLogo } from "@/components/branding/brand-logo"
 
@@ -102,6 +104,18 @@ export default function HomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+
+  const [hasMounted, setHasMounted] = useState(false)
+
+
+
+  // Track client-side hydration to prevent hydration mismatch
+
+  useEffect(() => {
+
+    setHasMounted(true)
+
+  }, [])
 
 
 
@@ -191,9 +205,9 @@ export default function HomePage() {
 
 
 
-  // Show loading state while checking authentication
+  // Show loading state while checking authentication or waiting for client hydration
 
-  if (isLoading) {
+  if (!hasMounted || isLoading) {
 
     return (
 
@@ -203,7 +217,7 @@ export default function HomePage() {
 
           <div className="w-12 h-12 border-4 border-lht-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
 
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-lht-black/60">Loading...</p>
 
         </div>
 
@@ -267,7 +281,7 @@ export default function HomePage() {
               <BrandLogo className="justify-center" />
             </div>
 
-            <CardDescription className="text-gray-600">Log in met je werk e-mailadres</CardDescription>
+            <CardDescription className="text-lht-black/60">Log in met je werk e-mailadres</CardDescription>
 
           </CardHeader>
 
@@ -367,14 +381,11 @@ export default function HomePage() {
 
               </div>
 
-              <Button 
-
-                type="submit" 
-
-                className="w-full bg-lht-black hover:bg-lht-black/80 text-white"
-
+              <Button
+                type="submit"
+                variant="lht"
+                className="w-full"
                 disabled={isSubmitting || !email || !password}
-
               >
 
                 {isSubmitting ? (
@@ -397,7 +408,7 @@ export default function HomePage() {
 
             </form>
 
-            <div className="mt-6 text-center text-sm text-gray-600">
+            <div className="mt-6 text-center text-sm text-lht-black/60">
 
               Nog geen account?{" "}
 
@@ -447,57 +458,8 @@ function Dashboard({
 
 
 
-  const tools = [
-
-    {
-
-      id: "contract-clearance",
-
-      name: "Contract Clearance",
-
-      description: "AI-assistent voor contractbeheer en -controle",
-
-      icon: FileText,
-
-    },
-
-    {
-
-      id: "event-planner",
-
-      name: "Event Planner",
-
-      description: "AI-assistent voor evenement planning en organisatie",
-
-      icon: Calendar,
-
-    },
-
-    {
-
-      id: "event-contract-assistant",
-
-      name: "Event Contract Assistant",
-
-      description: "AI-assistent voor het opstellen van event contracten",
-
-      icon: FileCheck,
-
-    },
-
-    {
-
-      id: "marketing-communicatie",
-
-      name: "Marketing en Communicatie",
-
-      description: "AI-assistent voor marketing en communicatie",
-
-      icon: Megaphone,
-
-    },
-
-  ]
+  // Get agents from central configuration
+  const tools = getEnabledAgents()
 
 
 
@@ -527,11 +489,11 @@ function Dashboard({
 
     return (
 
-      <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <div className="h-screen bg-lht-cream flex flex-col overflow-hidden">
 
         {/* Header */}
 
-        <header className="bg-white border-b border-gray-200 flex-shrink-0">
+        <header className="bg-white border-b border-lht-black/10 flex-shrink-0">
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -545,7 +507,7 @@ function Dashboard({
 
                   onClick={() => setSelectedTool(null)}
 
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-lht-black/60 hover:text-lht-black"
 
                 >
 
@@ -553,7 +515,7 @@ function Dashboard({
 
                 </Button>
 
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-lht-black">
 
                   {tools.find((t) => t.id === selectedTool)?.name}
 
@@ -567,7 +529,7 @@ function Dashboard({
 
                   <DropdownMenuTrigger asChild>
 
-                    <Button variant="ghost" className="flex items-center space-x-2 hover:bg-gray-100">
+                    <Button variant="ghost" className="flex items-center space-x-2 hover:bg-lht-cream">
 
                       <div className="w-8 h-8 bg-lht-black rounded-full flex items-center justify-center text-white text-sm font-medium">
 
@@ -577,9 +539,9 @@ function Dashboard({
 
                       <div className="text-left">
 
-                        <div className="text-sm font-medium text-gray-900">{userProfile.name}</div>
+                        <div className="text-sm font-medium text-lht-black">{userProfile.name}</div>
 
-                        <div className="text-xs text-gray-500">{userProfile.role}</div>
+                        <div className="text-xs text-lht-black/50">{userProfile.role}</div>
 
                       </div>
 
@@ -689,9 +651,9 @@ function Dashboard({
 
                     <div className="text-left">
 
-                      <div className="text-sm font-medium text-gray-900">{userProfile.name}</div>
+                      <div className="text-sm font-medium text-lht-black">{userProfile.name}</div>
 
-                      <div className="text-xs text-gray-500">{userProfile.role}</div>
+                      <div className="text-xs text-lht-black/50">{userProfile.role}</div>
 
                     </div>
 
@@ -743,7 +705,7 @@ function Dashboard({
 
         <div className="mb-8">
 
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h2>
+          <h2 className="text-3xl font-bold text-lht-black mb-2">Dashboard</h2>
 
         </div>
 
@@ -751,9 +713,9 @@ function Dashboard({
 
         <div className="text-center mb-8">
 
-          <h3 className="text-2xl font-semibold text-gray-900 mb-2">Kies je tool</h3>
+          <h3 className="text-2xl font-semibold text-lht-black mb-2">Kies je tool</h3>
 
-          <p className="text-gray-600">Selecteer de AI-assistent die je wilt gebruiken</p>
+          <p className="text-lht-black/60">Selecteer de AI-assistent die je wilt gebruiken</p>
 
         </div>
 
@@ -787,9 +749,9 @@ function Dashboard({
 
                   </div>
 
-                  <CardTitle className="text-lg font-semibold text-gray-900">{tool.name}</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-lht-black">{tool.name}</CardTitle>
 
-                  <CardDescription className="text-sm text-gray-600">{tool.description}</CardDescription>
+                  <CardDescription className="text-sm text-lht-black/60">{tool.description}</CardDescription>
 
                 </CardHeader>
 
@@ -901,13 +863,13 @@ function ProfileManagement({
 
             <div className="flex items-center space-x-4">
 
-              <Button variant="ghost" onClick={onBack} className="text-gray-600 hover:text-gray-900">
+              <Button variant="ghost" onClick={onBack} className="text-lht-black/60 hover:text-lht-black">
 
                 ← Terug naar Dashboard
 
               </Button>
 
-              <h1 className="text-xl font-semibold text-gray-900">Profiel</h1>
+              <h1 className="text-xl font-semibold text-lht-black">Profiel</h1>
 
             </div>
 
@@ -923,9 +885,9 @@ function ProfileManagement({
 
                 <div className="text-left">
 
-                  <div className="text-sm font-medium text-gray-900">{userProfile.name}</div>
+                  <div className="text-sm font-medium text-lht-black">{userProfile.name}</div>
 
-                  <div className="text-xs text-gray-500">{userProfile.role}</div>
+                  <div className="text-xs text-lht-black/50">{userProfile.role}</div>
 
                 </div>
 
@@ -1009,10 +971,8 @@ function ProfileManagement({
 
               </div>
 
-              <Button onClick={handleSaveProfile} className="w-full bg-lht-black hover:bg-lht-black/80">
-
+              <Button onClick={handleSaveProfile} variant="lht" className="w-full">
                 Profiel Opslaan
-
               </Button>
 
             </CardContent>
@@ -1111,10 +1071,8 @@ function ProfileManagement({
 
                   <div className="flex space-x-2">
 
-                    <Button onClick={handlePasswordChange} className="flex-1 bg-lht-black hover:bg-lht-black/80">
-
+                    <Button onClick={handlePasswordChange} variant="lht" className="flex-1">
                       Wachtwoord Wijzigen
-
                     </Button>
 
                     <Button onClick={() => setShowPasswordChange(false)} variant="outline" className="flex-1">
