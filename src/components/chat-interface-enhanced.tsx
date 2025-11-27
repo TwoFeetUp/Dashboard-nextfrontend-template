@@ -32,25 +32,25 @@ interface ChatInterfaceEnhancedProps {
 }
 
 const SUGGESTION_PRESETS: Record<string, string[]> = {
-  "contract-clearance": [
-    "Kun je deze arbeidsovereenkomst controleren op risico's voor mijn organisatie?",
-    "Dit zakelijke contract voelt scheef; welke risico's zie je?",
-    "Ik wil een arbeidsovereenkomst invullen vanuit ons template, kun je dat doen?"
+  "henry-hr": [
+    "Ik wil mijn eigen Custom GPT maken, waar begin ik?",
+    "Kun je me helpen met het schrijven van instructies voor mijn GPT?",
+    "Wat zijn de beste practices voor het configureren van een Custom GPT?"
   ],
-  "event-planner": [
-    "Ik organiseer een bedrijfscongres op 12 oktober, kun je een draaiboek maken?",
-    "Kun je een draaiboek maken voor een publieksevenement met 5.000 bezoekers?",
-    "Dit is een interne borrel voor 80 mensen; welke info heb je nodig om te starten?"
+  "perry-prompt": [
+    "Kun je deze prompt verbeteren voor betere resultaten?",
+    "Hoe schrijf ik een effectieve system prompt?",
+    "Wat zijn veelgemaakte fouten bij het prompten van AI?"
   ],
-  "event-contract-assistant": [
-    "Controleer dit publieksevenement-contract op vergunning- en geluidsclausules.",
-    "Toets deze arbeidsovereenkomst op minimumloon, ketenregeling en proeftijd.",
-    "Analyseer deze samenwerkingsovereenkomst op risico's en onderhandelingskansen."
+  "corry-content": [
+    "Kun je deze tekst omzetten naar een LinkedIn post?",
+    "Maak een Instagram caption van deze informatie.",
+    "Transformeer dit persbericht naar social media content voor meerdere platforms."
   ],
-  "marketing-communicatie": [
-    "Schrijf een nieuwsbrief voor fans over Open Monumentendag.",
-    "Maak een contentkalender voor volgende maand op basis van de evenementenagenda.",
-    "Hier zijn onze social stats uit Q2; wat valt je op in het dashboard?"
+  "kenny-kennis": [
+    "Kun je deze transcriptie omzetten naar een gestructureerd knowledge file?",
+    "Help me deze informatie te formatteren voor AI-consumptie.",
+    "Extraheer de belangrijkste feiten uit dit document voor een kennisbank."
   ],
 }
 
@@ -289,30 +289,30 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
   // Custom placeholder for each tool
   const getPlaceholder = () => {
     const placeholders = {
-      "contract-clearance": {
-        title: `Hallo! Ik ben je Contract Clearance AI Assistent`,
-        subtitle: "Ik help je met contractbeheer en -controle. Upload een contract of stel een vraag!",
+      "henry-hr": {
+        title: `Hallo! Ik ben Henry HR`,
+        subtitle: "Ik begeleid je stap-voor-stap door het proces van het maken van je eigen Custom GPT.",
         icon: null
       },
-      "event-planner": {
-        title: `Hallo! Ik ben je Event Planner AI Assistent`,
-        subtitle: "Ik help je met het plannen en organiseren van evenementen.",
+      "perry-prompt": {
+        title: `Hallo! Ik ben Perry Prompt`,
+        subtitle: "Ik help je met het optimaliseren van je AI-interacties en prompts.",
         icon: null
       },
-      "event-contract-assistant": {
-        title: `Hallo! Ik ben je Event Contract AI Assistent`,
-        subtitle: "Ik help je met het opstellen van event contracten.",
+      "corry-content": {
+        title: `Hallo! Ik ben Corry Content`,
+        subtitle: "Ik transformeer je ruwe teksten in platform-specifieke content die klaar is om te posten.",
         icon: null
       },
-      "marketing-communicatie": {
-        title: `Hallo! Ik ben je Marketing & Communicatie AI Assistent`,
-        subtitle: "Ik help je met marketing en communicatie strategieën.",
+      "kenny-kennis": {
+        title: `Hallo! Ik ben Kenny Kennis`,
+        subtitle: "Ik transformeer ruwe informatie in AI-interpreteerbare knowledge files.",
         icon: null
       }
     }
-    
+
     return placeholders[toolId as keyof typeof placeholders] || {
-      title: `Hallo! Ik ben je ${toolName} AI Assistent`,
+      title: `Hallo! Ik ben ${toolName}`,
       subtitle: "Stel me een vraag om te beginnen",
       icon: null
     }

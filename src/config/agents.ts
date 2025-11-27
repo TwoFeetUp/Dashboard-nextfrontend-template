@@ -6,10 +6,10 @@
  */
 
 import {
-  FileText,
-  Calendar,
-  FileCheck,
-  Megaphone,
+  UserCircle,
+  Sparkles,
+  PenTool,
+  BookOpen,
   type LucideIcon
 } from "lucide-react"
 
@@ -30,7 +30,7 @@ export interface AgentConfig {
   /** Optional: accent color for the agent card (uses lht-green by default) */
   accentColor?: string
   /** Optional: category for grouping agents */
-  category?: "contracts" | "events" | "marketing" | "general"
+  category?: "hr" | "prompts" | "content" | "knowledge" | "general"
 }
 
 /**
@@ -43,36 +43,36 @@ export interface AgentConfig {
  */
 export const agents: AgentConfig[] = [
   {
-    id: "contract-clearance",
-    name: "Contract Clearance",
-    description: "AI-assistent voor contractbeheer en -controle",
-    icon: FileText,
+    id: "henry-hr",
+    name: "Henry HR",
+    description: "Begeleidt teamleden stap-voor-stap door het proces van het maken van hun eigen Custom GPT",
+    icon: UserCircle,
     enabled: true,
-    category: "contracts",
+    category: "hr",
   },
   {
-    id: "event-planner",
-    name: "Event Planner",
-    description: "AI-assistent voor evenement planning en organisatie",
-    icon: Calendar,
+    id: "perry-prompt",
+    name: "Perry Prompt",
+    description: "Een AI collega gespecialiseerd in het optimaliseren van AI-interacties",
+    icon: Sparkles,
     enabled: true,
-    category: "events",
+    category: "prompts",
   },
   {
-    id: "event-contract-assistant",
-    name: "Event Contract Assistant",
-    description: "AI-assistent voor het opstellen van event contracten",
-    icon: FileCheck,
+    id: "corry-content",
+    name: "Corry Content",
+    description: "Transformeert ruwe teksten in platform-specifieke content die klaar is om te posten",
+    icon: PenTool,
     enabled: true,
-    category: "events",
+    category: "content",
   },
   {
-    id: "marketing-communicatie",
-    name: "Marketing en Communicatie",
-    description: "AI-assistent voor marketing en communicatie",
-    icon: Megaphone,
+    id: "kenny-kennis",
+    name: "Kenny Kennis",
+    description: "Transformeert ruwe informatie in AI-interpreteerbare knowledge files",
+    icon: BookOpen,
     enabled: true,
-    category: "marketing",
+    category: "knowledge",
   },
 ]
 
