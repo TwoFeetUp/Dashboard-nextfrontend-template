@@ -279,13 +279,21 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
                 }
               }
             } else if (line.startsWith('data: ')) {
-              // Format: data: content
+              // Format: data: content (SSE format)
               const content = line.slice(6).trim()
               if (content && content !== '[DONE]') {
                 try {
                   const parsed = JSON.parse(content)
-                  // Handle Vercel AI SDK streaming format
-                  if (parsed.type === 'text-delta' && parsed.delta) {
+                  // Handle our Pydantic AI streaming format
+                  if (parsed.event_kind === 'part_delta' && parsed.delta?.content_delta) {
+                    assistantMessage += parsed.delta.content_delta
+                  }
+                  // Handle done event - use response if we missed deltas
+                  else if (parsed.type === 'done' && parsed.response && !assistantMessage) {
+                    assistantMessage = parsed.response
+                  }
+                  // Handle Vercel AI SDK streaming format (fallback)
+                  else if (parsed.type === 'text-delta' && parsed.delta) {
                     assistantMessage += parsed.delta
                   } else if (parsed.choices?.[0]?.delta?.content) {
                     assistantMessage += parsed.choices[0].delta.content
@@ -296,9 +304,10 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
                   }
                 } catch (e) {
                   // Try without parsing
-                  if (!content.includes('type":"start"') && 
-                      !content.includes('type":"finish') && 
-                      !content.includes('type":"error"')) {
+                  if (!content.includes('type":"start"') &&
+                      !content.includes('type":"finish') &&
+                      !content.includes('type":"error"') &&
+                      !content.includes('type":"ping"')) {
                     assistantMessage += content
                   }
                 }

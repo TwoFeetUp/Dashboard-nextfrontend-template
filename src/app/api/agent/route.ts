@@ -7,7 +7,7 @@ import { NextRequest } from 'next/server'
  * It acts as a bridge between the Next.js frontend and the Python agent server.
  */
 
-export const runtime = 'edge'
+// Note: Using Node.js runtime (not Edge) to allow localhost connections in dev
 export const dynamic = 'force-dynamic'
 
 interface AgentRequest {
@@ -36,9 +36,10 @@ export async function POST(req: NextRequest) {
 
     const assistantType = (body as any).assistantType
     const rawConversationId = (body as any).conversation_id ?? (body as any).conversationId
+    // No "default" fallback - this was causing polluted history to be loaded
     const conversationId = typeof rawConversationId === 'string' && rawConversationId.trim()
       ? rawConversationId
-      : 'default'
+      : undefined
 
     if (!message) {
       return Response.json(
