@@ -29,6 +29,7 @@ interface ChatContainerProps {
   enableOCR?: boolean
   suggestions?: string[]
   onSuggestionClick?: (suggestion: string) => void
+  accentColor?: string
 }
 
 export default function ChatContainer({
@@ -51,6 +52,7 @@ export default function ChatContainer({
   enableOCR = true,
   suggestions = [],
   onSuggestionClick,
+  accentColor = '#a1d980',
 }: ChatContainerProps) {
   const { 
     containerRef: messagesContainerRef, 
@@ -89,6 +91,7 @@ export default function ChatContainer({
             message={message}
             isStreaming={isLoading && index === messages.length - 1}
             isLatest={index === messages.length - 1}
+            accentColor={accentColor}
           />
         ))}
         {showAssistantLoader && (
@@ -100,10 +103,10 @@ export default function ChatContainer({
         )}
       </div>
     )
-  }, [messages, isLoading])
+  }, [messages, isLoading, accentColor])
 
   return (
-    <div className="flex-1 bg-gray-50 border-r border-gray-200 flex flex-col h-full overflow-hidden">
+    <div className="flex-1 border-r border-gray-200 flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#f6f6ed' }}>
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
@@ -140,6 +143,7 @@ export default function ChatContainer({
             onTranscription={(text) => {}}
             isLoading={isLoading}
             enableVoice={enableVoice}
+            accentColor={accentColor}
           />
         </DragDropZone>
       </div>

@@ -5,7 +5,7 @@
    ===========================================
    Primary (Cream):    #f6f6ed - 60 27% 95%
    Secondary (Green):  #a1d981 - 96 52% 68%
-   Header/Footer:      #f6b682 - 27 86% 74%
+   Header/Footer:      #f5b781 - 28 85% 73%
    Tertiary (Yellow):  #f0e173 - 51 79% 70%
    Black:              #000000 - 0 0% 0%
    =========================================== */
@@ -16,7 +16,7 @@
     --lht-black: 0 0% 0%;
     --lht-cream: 60 27% 95%;
     --lht-green: 96 52% 68%;
-    --lht-orange: 27 86% 74%;
+    --lht-orange: 28 85% 73%;
     --lht-yellow: 51 79% 70%;
 
     /* Theme mapping to LHT colors */
@@ -42,7 +42,7 @@
 
     /* Chart colors using LHT palette */
     --chart-1: 96 52% 68%;
-    --chart-2: 27 86% 74%;
+    --chart-2: 28 85% 73%;
     --chart-3: 51 79% 70%;
     --chart-4: 0 0% 0%;
     --chart-5: 60 27% 85%;
@@ -125,6 +125,6 @@ body {
 /* LHT Section Backgrounds */
 .bg-lht-cream { background-color: #f6f6ed; }
 .bg-lht-green { background-color: #a1d981; }
-.bg-lht-orange { background-color: #f6b682; }
+.bg-lht-orange { background-color: #f5b781; }
 .bg-lht-yellow { background-color: #f0e173; }
 .text-lht-black { color: #000000; }

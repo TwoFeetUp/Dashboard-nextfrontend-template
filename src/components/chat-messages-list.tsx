@@ -22,7 +22,7 @@ export const ChatMessagesList = memo(
           <div key={message.id} className="group">
             {message.role === "user" ? (
               <div className="flex justify-end">
-                <div className="max-w-xl bg-[#ff7200] text-white p-3 rounded-lg">
+                <div className="max-w-xl bg-[#f5b781] text-black p-3 rounded-lg">
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 </div>
               </div>

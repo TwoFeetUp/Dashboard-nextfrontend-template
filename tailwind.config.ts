@@ -15,7 +15,7 @@ const config: Config = {
   				black: '#000000',
   				cream: '#f6f6ed',
   				green: '#a1d981',
-  				orange: '#f6b682',
+  				orange: '#f5b781',
   				yellow: '#f0e173',
   			},
   			// Theme colors (mapped to LHT palette)

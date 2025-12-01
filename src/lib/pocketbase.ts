@@ -78,4 +78,17 @@ export const subscribeToAuthChanges = (
   });
 };
 
+// Update user profile
+export const updateUserProfile = async (
+  userId: string,
+  data: {
+    name?: string;
+    email?: string;
+    username?: string;
+  }
+): Promise<AuthRecord> => {
+  const record = await pb.collection('users').update(userId, data);
+  return record as AuthRecord;
+};
+
 export default pb;

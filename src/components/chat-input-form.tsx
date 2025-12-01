@@ -34,7 +34,7 @@ export function ChatInputForm({ onSubmit, isLoading, placeholder }: ChatInputFor
         <Button
           type="submit"
           disabled={!localInput || !localInput.trim() || isLoading}
-          className="bg-[#ff7200] hover:bg-[#e56700]"
+          className="bg-transparent hover:bg-[#f5b781] border border-gray-300 hover:border-[#f5b781] text-gray-600 hover:text-black transition-colors"
         >
           Verstuur
         </Button>

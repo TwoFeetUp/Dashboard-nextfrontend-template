@@ -68,6 +68,32 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
     }
   }, [toolId])
 
+  const loadSession = useCallback(async (session: ChatSession) => {
+    if (!session.conversationId || !user) return
+
+    setCurrentSession(session)
+    setConversationId(session.conversationId)
+
+    try {
+      const safeConversationId = sanitizeFilterValue(session.conversationId)
+      const messages = await pb.collection('messages').getList(1, 100, {
+        filter: `conversationId = "${safeConversationId}"`,
+        sort: 'created', // Sort by creation time to preserve message order
+      })
+
+      const loadedMessages: ChatMessage[] = messages.items.map(msg => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+      }))
+
+      setMessages(loadedMessages)
+    } catch (error) {
+      console.error('Failed to load messages:', error)
+      setMessages([]) // Clear messages on error to show empty state
+    }
+  }, [user])
+
   // Load sessions from PocketBase on mount or tool change
   useEffect(() => {
     if (user) {
@@ -137,32 +163,6 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
       return null
     }
   }
-
-  const loadSession = useCallback(async (session: ChatSession) => {
-    if (!session.conversationId || !user) return
-
-    setCurrentSession(session)
-    setConversationId(session.conversationId)
-
-    try {
-      const safeConversationId = sanitizeFilterValue(session.conversationId)
-      const messages = await pb.collection('messages').getList(1, 100, {
-        filter: `conversationId = "${safeConversationId}"`,
-        sort: 'created', // Sort by creation time to preserve message order
-      })
-
-      const loadedMessages: ChatMessage[] = messages.items.map(msg => ({
-        id: msg.id,
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      }))
-
-      setMessages(loadedMessages)
-    } catch (error) {
-      console.error('Failed to load messages:', error)
-      setMessages([]) // Clear messages on error to show empty state
-    }
-  }, [user])
 
   const handleMessageSubmit = async (messageContent: string) => {
     if (isLoading) return
@@ -409,7 +409,7 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
         <div className="p-3 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-gray-900 text-sm">Geschiedenis</h3>
-            <Button size="sm" variant="default" onClick={createNewSession} className="bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent">
+            <Button size="sm" variant="default" onClick={createNewSession} className="bg-[#a2d982] hover:bg-[#8ec46a] text-black border border-[#a2d982] hover:border-[#8ec46a] transition-all duration-200 hover:shadow-md">
               + Nieuw
             </Button>
           </div>
@@ -421,7 +421,7 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
                 key={session.id}
                 className={`p-2 rounded-lg cursor-pointer transition-colors ${
                   currentSession?.id === session.id
-                    ? "bg-[#ffe3d1] border border-[#ffa366]"
+                    ? "bg-[#fef3e2] border border-[#f5b781]"
                     : "bg-gray-50 hover:bg-gray-100"
                 }`}
                 onClick={() => loadSession(session)}
@@ -464,8 +464,8 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
               <div className="max-w-4xl mx-auto space-y-6">
                 {messages.length === 0 && (
                   <div className="text-center text-gray-500 py-8">
-                    <div className="w-12 h-12 bg-[#ffe3d1] rounded-full flex items-center justify-center mx-auto mb-4">
-                      <div className="w-6 h-6 bg-[#ff7200] rounded"></div>
+                    <div className="w-12 h-12 bg-[#fef3e2] rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="w-6 h-6 bg-[#f5b781] rounded"></div>
                     </div>
                     <p className="text-lg font-medium">Hallo! Ik ben je {toolName} AI Assistent</p>
                     <p className="text-sm">Stel me een vraag om te beginnen</p>
@@ -490,7 +490,7 @@ export function ChatInterface({ toolName, toolId }: ChatInterfaceProps) {
               </div>
               <p className="text-lg font-medium">Selecteer een chat of start een nieuwe</p>
               <p className="text-sm">Kies een bestaande chat sessie of maak een nieuwe aan</p>
-              <Button onClick={createNewSession} variant="default" className="mt-4 bg-[#ff7200] hover:bg-[#e56700] text-white border-transparent">
+              <Button onClick={createNewSession} variant="default" className="mt-4 bg-[#a2d982] hover:bg-[#8ec46a] text-black border border-[#a2d982] hover:border-[#8ec46a] transition-all duration-200 hover:shadow-md">
                 Start Nieuwe Chat
               </Button>
             </div>

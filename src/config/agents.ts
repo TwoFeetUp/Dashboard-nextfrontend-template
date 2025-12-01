@@ -49,6 +49,7 @@ export const agents: AgentConfig[] = [
     icon: UserCircle,
     enabled: true,
     category: "hr",
+    accentColor: "#f7b681",
   },
   {
     id: "perry-prompt",
@@ -57,6 +58,7 @@ export const agents: AgentConfig[] = [
     icon: Sparkles,
     enabled: true,
     category: "prompts",
+    accentColor: "#a1d980",
   },
   {
     id: "corry-content",
@@ -65,6 +67,7 @@ export const agents: AgentConfig[] = [
     icon: PenTool,
     enabled: true,
     category: "content",
+    accentColor: "#efe173",
   },
   {
     id: "kenny-kennis",
@@ -73,6 +76,7 @@ export const agents: AgentConfig[] = [
     icon: BookOpen,
     enabled: true,
     category: "knowledge",
+    accentColor: "#e7a4bb",
   },
 ]
 

@@ -44,6 +44,8 @@ import { getEnabledAgents } from "@/config/agents"
 
 import { BrandLogo } from "@/components/branding/brand-logo"
 
+import { updateUserProfile } from "@/lib/pocketbase"
+
 
 
 
@@ -91,7 +93,7 @@ interface ChatSession {
 
 export default function HomePage() {
 
-  const { user, isLoading, isAuthenticated, error, login, logout, clearError } = useAuth()
+  const { user, isLoading, isAuthenticated, error, login, logout, clearError, refreshSession } = useAuth()
 
   const [email, setEmail] = useState("")
 
@@ -229,7 +231,7 @@ export default function HomePage() {
 
   if (isAuthenticated && userProfile) {
 
-    return <Dashboard onLogout={handleLogout} userProfile={userProfile} setUserProfile={setUserProfile} />
+    return <Dashboard onLogout={handleLogout} userProfile={userProfile} setUserProfile={setUserProfile} userId={user?.id} refreshSession={refreshSession} />
 
   }
 
@@ -440,6 +442,10 @@ function Dashboard({
 
   setUserProfile,
 
+  userId,
+
+  refreshSession,
+
 }: {
 
   onLogout: () => void
@@ -447,6 +453,10 @@ function Dashboard({
   userProfile: UserProfile
 
   setUserProfile: (profile: UserProfile) => void
+
+  userId?: string
+
+  refreshSession: () => Promise<void>
 
 }) {
 
@@ -474,6 +484,10 @@ function Dashboard({
         onBack={() => setShowProfile(false)}
 
         onLogout={onLogout}
+
+        userId={userId}
+
+        refreshSession={refreshSession}
 
       />
 
@@ -605,7 +619,10 @@ function Dashboard({
 
                 <CardHeader className="text-center">
 
-                  <div className="w-16 h-16 bg-lht-green/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                    style={{ backgroundColor: tool.accentColor || '#a1d980' }}
+                  >
 
                     <IconComponent className="w-8 h-8 text-lht-black" />
 
@@ -645,6 +662,10 @@ function ProfileManagement({
 
   onLogout,
 
+  userId,
+
+  refreshSession,
+
 }: {
 
   userProfile: UserProfile
@@ -654,6 +675,10 @@ function ProfileManagement({
   onBack: () => void
 
   onLogout: () => void
+
+  userId?: string
+
+  refreshSession: () => Promise<void>
 
 }) {
 
@@ -669,11 +694,47 @@ function ProfileManagement({
 
 
 
-  const handleSaveProfile = () => {
+  const [isSaving, setIsSaving] = useState(false)
 
-    setUserProfile(editedProfile)
+  const handleSaveProfile = async () => {
 
-    alert("Profiel succesvol bijgewerkt!")
+    if (!userId) {
+
+      alert("Gebruiker niet gevonden. Log opnieuw in.")
+
+      return
+
+    }
+
+    setIsSaving(true)
+
+    try {
+
+      await updateUserProfile(userId, {
+
+        name: editedProfile.name,
+
+        email: editedProfile.email,
+
+      })
+
+      await refreshSession()
+
+      setUserProfile(editedProfile)
+
+      alert("Profiel succesvol bijgewerkt!")
+
+    } catch (error: any) {
+
+      console.error("Fout bij opslaan profiel:", error)
+
+      alert(error?.message || "Er is een fout opgetreden bij het opslaan van je profiel.")
+
+    } finally {
+
+      setIsSaving(false)
+
+    }
 
   }
 
@@ -833,8 +894,8 @@ function ProfileManagement({
 
               </div>
 
-              <Button onClick={handleSaveProfile} variant="lht" className="w-full">
-                Profiel Opslaan
+              <Button onClick={handleSaveProfile} variant="lht" className="w-full" disabled={isSaving}>
+                {isSaving ? "Opslaan..." : "Profiel Opslaan"}
               </Button>
 
             </CardContent>

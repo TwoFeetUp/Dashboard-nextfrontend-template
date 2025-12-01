@@ -15,6 +15,7 @@ interface ChatInputProps {
   isLoading: boolean
   placeholder?: string
   enableVoice?: boolean
+  accentColor?: string
 }
 
 export default function ChatInput({
@@ -25,7 +26,8 @@ export default function ChatInput({
   onTranscription,
   isLoading,
   placeholder = "Type a message or drop a file...",
-  enableVoice = true
+  enableVoice = true,
+  accentColor = '#a1d980'
 }: ChatInputProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -47,7 +49,18 @@ export default function ChatInput({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={isLoading}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff7200] focus:ring-opacity-20 focus:border-[#ff7200] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              '--tw-ring-color': accentColor,
+            } as React.CSSProperties}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = accentColor
+              e.currentTarget.style.boxShadow = `0 0 0 2px ${accentColor}33`
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = ''
+              e.currentTarget.style.boxShadow = ''
+            }}
           />
         </div>
         <FileUploadButton
@@ -82,7 +95,22 @@ export default function ChatInput({
           type="submit"
           disabled={isLoading || !value?.trim()}
           size="sm"
-          className="bg-[#ff7200] text-white rounded-lg hover:bg-[#e56700] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-transparent text-gray-600 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          style={{
+            '--hover-bg': accentColor,
+          } as React.CSSProperties}
+          onMouseEnter={(e) => {
+            if (!isLoading && value?.trim()) {
+              e.currentTarget.style.backgroundColor = accentColor
+              e.currentTarget.style.borderColor = accentColor
+              e.currentTarget.style.color = 'black'
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = ''
+            e.currentTarget.style.borderColor = ''
+            e.currentTarget.style.color = ''
+          }}
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

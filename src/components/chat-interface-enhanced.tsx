@@ -29,6 +29,7 @@ interface ChatSession {
 interface ChatInterfaceEnhancedProps {
   toolName: string
   toolId: string
+  accentColor?: string
 }
 
 const SUGGESTION_PRESETS: Record<string, string[]> = {
@@ -59,7 +60,13 @@ const DEFAULT_SUGGESTIONS = [
   "Welke informatie heb je van mij nodig om te starten?"
 ]
 
-export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhancedProps) {
+export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980' }: ChatInterfaceEnhancedProps) {
+  // Calculate darker shade for hover
+  const darkerAccent = accentColor.replace(/^#/, '').match(/.{2}/g)?.map(hex => {
+    const val = Math.max(0, parseInt(hex, 16) - 20)
+    return val.toString(16).padStart(2, '0')
+  }).join('') || accentColor.slice(1)
+  const hoverColor = `#${darkerAccent}`
   const { user, logout } = useAuth()
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null)
@@ -342,9 +349,23 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
               key={session.id}
               className={`group grid grid-cols-[1fr_auto_auto] items-start gap-2 p-2 rounded-lg ${!isEditing ? 'cursor-pointer' : ''} transition-colors ${
                 isActive
-                  ? "bg-lht-green/30 border border-lht-green"
-                  : "bg-lht-cream hover:bg-lht-green/10"
+                  ? "border"
+                  : "bg-lht-cream"
               }`}
+              style={isActive ? {
+                backgroundColor: `${accentColor}4D`,
+                borderColor: accentColor
+              } : undefined}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = `${accentColor}1A`
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = ''
+                }
+              }}
               onClick={() => {
                 if (isEditing) return
                 void loadSession(session)
@@ -495,8 +516,12 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              variant="lht"
               onClick={() => { void createNewSession() }}
+              style={{
+                backgroundColor: accentColor,
+                borderColor: accentColor,
+              }}
+              className="text-black border transition-all duration-200 hover:shadow-md hover:opacity-80"
             >
               + Nieuw
             </Button>
@@ -571,13 +596,17 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
                   enableOCR={true}
                   suggestions={suggestions}
                   onSuggestionClick={handleSuggestionClick}
+                  accentColor={accentColor}
                 />
               </div>
             </>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center space-y-4 text-center text-lht-black/50">
-              <div className="w-12 h-12 bg-lht-green/30 rounded-full flex items-center justify-center">
-                <div className="w-6 h-6 bg-lht-green rounded"></div>
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: `${accentColor}4D` }}
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: accentColor }}></div>
               </div>
               <div>
                 <p className="text-lg font-medium text-lht-black">Selecteer een chat of start een nieuwe</p>
@@ -586,7 +615,11 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
               <div className="flex flex-col items-center gap-3">
                 <Button
                   onClick={() => { void createNewSession() }}
-                  variant="lht"
+                  style={{
+                    backgroundColor: accentColor,
+                    borderColor: accentColor,
+                  }}
+                  className="text-black border transition-all duration-200 hover:shadow-md hover:opacity-80"
                 >
                   Start Nieuwe Chat
                 </Button>

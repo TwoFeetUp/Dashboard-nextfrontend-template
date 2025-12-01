@@ -11,9 +11,10 @@ interface ChatMessageProps {
   message: Message
   isStreaming?: boolean
   isLatest?: boolean
+  accentColor?: string
 }
 
-const ChatMessageComponent = ({ message, isStreaming = false }: ChatMessageProps) => {
+const ChatMessageComponent = ({ message, isStreaming = false, accentColor = '#a1d980' }: ChatMessageProps) => {
   const streamingContent = useMemo(() => {
     if (!message.content) return ''
     return isStreaming ? `${message.content}▊` : message.content
@@ -23,7 +24,10 @@ const ChatMessageComponent = ({ message, isStreaming = false }: ChatMessageProps
   if (message.role === 'user') {
     return (
       <div className="flex justify-end user-message">
-        <div className="px-3 py-2 rounded-lg shadow-sm border max-w-[75%] bg-[#ff7200] text-white border-[#ffa366]">
+        <div
+          className="px-3 py-2 rounded-lg shadow-sm border max-w-[75%] text-black"
+          style={{ backgroundColor: accentColor, borderColor: accentColor }}
+        >
           <p className="text-sm leading-relaxed">{message.content}</p>
         </div>
       </div>
@@ -99,6 +103,7 @@ export default memo(ChatMessageComponent, (prevProps, nextProps) => {
   return (
     prevProps.message === nextProps.message &&
     prevProps.isStreaming === nextProps.isStreaming &&
-    prevProps.isLatest === nextProps.isLatest
+    prevProps.isLatest === nextProps.isLatest &&
+    prevProps.accentColor === nextProps.accentColor
   )
 })
