@@ -1,11 +1,10 @@
 import PocketBase from 'pocketbase';
 
 // Create and configure PocketBase client instance
-const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL;
-if (!pbUrl) {
-  throw new Error('NEXT_PUBLIC_POCKETBASE_URL environment variable is required');
-}
-const pb = new PocketBase(pbUrl);
+// Default to production URL for Railway deployments where env vars may not be available at build time
+const pb = new PocketBase(
+  process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pocketbase-lht.up.railway.app'
+);
 
 // Type definitions for User model
 export interface User {

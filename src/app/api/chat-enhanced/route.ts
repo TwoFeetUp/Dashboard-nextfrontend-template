@@ -17,11 +17,10 @@ const mistral = createOpenAICompatible({
 });
 
 // Initialize PocketBase client (optional - for saving messages)
-const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL;
-if (!pbUrl) {
-  throw new Error('NEXT_PUBLIC_POCKETBASE_URL environment variable is required');
-}
-const pb = new PocketBase(pbUrl);
+// Default to production URL for Railway deployments where env vars may not be available at build time
+const pb = new PocketBase(
+  process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://pocketbase-lht.up.railway.app'
+);
 
 // Function to load system prompt from markdown file
 async function loadSystemPrompt(assistantType: string): Promise<string> {
