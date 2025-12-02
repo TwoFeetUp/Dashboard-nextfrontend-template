@@ -17,7 +17,11 @@ const mistral = createOpenAICompatible({
 });
 
 // Initialize PocketBase client (optional - for saving messages)
-const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090');
+const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL;
+if (!pbUrl) {
+  throw new Error('NEXT_PUBLIC_POCKETBASE_URL environment variable is required');
+}
+const pb = new PocketBase(pbUrl);
 
 // Function to load system prompt from markdown file
 async function loadSystemPrompt(assistantType: string): Promise<string> {
