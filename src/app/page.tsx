@@ -624,7 +624,7 @@ function Dashboard({
                     style={{ backgroundColor: tool.accentColor || '#a1d980' }}
                   >
 
-                    <IconComponent className="w-8 h-8 text-lht-black" />
+                    <IconComponent className="w-8 h-8" style={{ color: tool.textColor || '#1a1a1a' }} />
 
                   </div>
 

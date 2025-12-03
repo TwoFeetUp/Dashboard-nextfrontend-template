@@ -30,6 +30,8 @@ export interface AgentConfig {
   enabled: boolean
   /** Optional: accent color for the agent card (uses lht-green by default) */
   accentColor?: string
+  /** Optional: text/icon color for the agent card (uses lht-black by default, use white for dark backgrounds) */
+  textColor?: string
   /** Optional: category for grouping agents */
   category?: "hr" | "prompts" | "content" | "knowledge" | "general" | "operations"
 }
@@ -87,6 +89,7 @@ export const agents: AgentConfig[] = [
     enabled: true,
     category: "operations",
     accentColor: "#000000",
+    textColor: "#ffffff",
   },
 ]
 
