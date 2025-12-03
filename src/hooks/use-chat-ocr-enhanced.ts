@@ -790,12 +790,21 @@ export function useChatOCREnhanced({
           syncAssistantState()
         }
 
+        // Buffer for incomplete SSE lines (long JSON events may span multiple chunks)
+        let lineBuffer = ''
+
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
 
           const chunk = decoder.decode(value, { stream: true })
-          const lines = chunk.split('\n')
+          // Prepend any buffered partial line from previous chunk
+          const fullChunk = lineBuffer + chunk
+          const lines = fullChunk.split('\n')
+
+          // The last element might be incomplete if chunk didn't end with newline
+          // Buffer it for the next iteration
+          lineBuffer = lines.pop() || ''
 
           for (const rawLine of lines) {
             const line = rawLine.trim()
@@ -818,9 +827,16 @@ export function useChatOCREnhanced({
                   handleLegacyEvent(parsed)
                 }
               } catch {
-                assistantMessage += data
-                appendTextToTimeline(data)
-                syncAssistantState()
+                // Only append as text if it doesn't look like truncated JSON
+                // Truncated JSON starts with { but won't parse - skip it
+                if (!data.startsWith('{') && !data.startsWith('[')) {
+                  assistantMessage += data
+                  appendTextToTimeline(data)
+                  syncAssistantState()
+                }
+                // If it looks like truncated JSON, it was likely a buffering issue
+                // that shouldn't happen anymore with proper line buffering
+                console.warn('[SSE] Skipping unparseable JSON-like data:', data.slice(0, 100))
               }
             } else if (/^\d+:/.test(line)) {
               const content = line.slice(line.indexOf(':') + 1).trim()
@@ -838,6 +854,27 @@ export function useChatOCREnhanced({
               }
 
               syncAssistantState()
+            }
+          }
+        }
+
+        // Process any remaining buffered content after stream ends
+        if (lineBuffer.trim()) {
+          const line = lineBuffer.trim()
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim()
+            if (data && data !== '[DONE]') {
+              try {
+                const parsed = JSON.parse(data)
+                if (parsed.event_kind) {
+                  handleAgentEvent(parsed)
+                } else {
+                  handleLegacyEvent(parsed)
+                }
+              } catch {
+                // Final buffer parse failed - likely incomplete data, skip it
+                console.warn('[SSE] Final buffer parse failed:', data.slice(0, 100))
+              }
             }
           }
         }
