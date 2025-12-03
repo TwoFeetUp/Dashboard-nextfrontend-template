@@ -53,6 +53,11 @@ const SUGGESTION_PRESETS: Record<string, string[]> = {
     "Help me deze informatie te formatteren voor AI-consumptie.",
     "Extraheer de belangrijkste feiten uit dit document voor een kennisbank."
   ],
+  "mickey-mice": [
+    "Welke events staan er gepland voor deze maand?",
+    "Kun je een overzicht geven van recente boekingen?",
+    "Welke venues zijn beschikbaar?"
+  ],
 }
 
 const DEFAULT_SUGGESTIONS = [

@@ -10,6 +10,7 @@ import {
   Sparkles,
   PenTool,
   BookOpen,
+  Mouse,
   type LucideIcon
 } from "lucide-react"
 
@@ -30,7 +31,7 @@ export interface AgentConfig {
   /** Optional: accent color for the agent card (uses lht-green by default) */
   accentColor?: string
   /** Optional: category for grouping agents */
-  category?: "hr" | "prompts" | "content" | "knowledge" | "general"
+  category?: "hr" | "prompts" | "content" | "knowledge" | "general" | "operations"
 }
 
 /**
@@ -77,6 +78,15 @@ export const agents: AgentConfig[] = [
     enabled: true,
     category: "knowledge",
     accentColor: "#e7a4bb",
+  },
+  {
+    id: "mickey-mice",
+    name: "Mickey Mice",
+    description: "Readonly toegang tot MICE Operations voor events en meetings",
+    icon: Mouse,
+    enabled: true,
+    category: "operations",
+    accentColor: "#000000",
   },
 ]
 
