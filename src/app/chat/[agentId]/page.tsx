@@ -130,7 +130,7 @@ export default function ChatPage() {
       {/* Chat Interface */}
       <main className="flex-1 overflow-hidden">
         <div className="h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <ChatInterfaceEnhanced toolName={agent.name} toolId={agent.id} accentColor={agent.accentColor} />
+          <ChatInterfaceEnhanced toolName={agent.name} toolId={agent.id} accentColor={agent.accentColor} textColor={agent.textColor} />
         </div>
       </main>
     </div>

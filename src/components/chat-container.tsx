@@ -30,6 +30,7 @@ interface ChatContainerProps {
   suggestions?: string[]
   onSuggestionClick?: (suggestion: string) => void
   accentColor?: string
+  textColor?: string
 }
 
 export default function ChatContainer({
@@ -53,6 +54,7 @@ export default function ChatContainer({
   suggestions = [],
   onSuggestionClick,
   accentColor = '#a1d980',
+  textColor = '#1a1a1a',
 }: ChatContainerProps) {
   const { 
     containerRef: messagesContainerRef, 
@@ -92,6 +94,7 @@ export default function ChatContainer({
             isStreaming={isLoading && index === messages.length - 1}
             isLatest={index === messages.length - 1}
             accentColor={accentColor}
+            textColor={textColor}
           />
         ))}
         {showAssistantLoader && (
@@ -103,7 +106,7 @@ export default function ChatContainer({
         )}
       </div>
     )
-  }, [messages, isLoading, accentColor])
+  }, [messages, isLoading, accentColor, textColor])
 
   return (
     <div className="flex-1 border-r border-gray-200 flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#f6f6ed' }}>

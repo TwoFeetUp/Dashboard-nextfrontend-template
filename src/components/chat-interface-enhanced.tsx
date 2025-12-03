@@ -30,6 +30,7 @@ interface ChatInterfaceEnhancedProps {
   toolName: string
   toolId: string
   accentColor?: string
+  textColor?: string
 }
 
 const SUGGESTION_PRESETS: Record<string, string[]> = {
@@ -65,7 +66,7 @@ const DEFAULT_SUGGESTIONS = [
   "Welke informatie heb je van mij nodig om te starten?"
 ]
 
-export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980' }: ChatInterfaceEnhancedProps) {
+export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980', textColor = '#1a1a1a' }: ChatInterfaceEnhancedProps) {
   // Calculate darker shade for hover
   const darkerAccent = accentColor.replace(/^#/, '').match(/.{2}/g)?.map(hex => {
     const val = Math.max(0, parseInt(hex, 16) - 20)
@@ -525,8 +526,9 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
               style={{
                 backgroundColor: accentColor,
                 borderColor: accentColor,
+                color: textColor,
               }}
-              className="text-black border transition-all duration-200 hover:shadow-md hover:opacity-80"
+              className="border transition-all duration-200 hover:shadow-md hover:opacity-80"
             >
               + Nieuw
             </Button>
@@ -602,6 +604,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
                   suggestions={suggestions}
                   onSuggestionClick={handleSuggestionClick}
                   accentColor={accentColor}
+                  textColor={textColor}
                 />
               </div>
             </>
@@ -623,8 +626,9 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
                   style={{
                     backgroundColor: accentColor,
                     borderColor: accentColor,
+                    color: textColor,
                   }}
-                  className="text-black border transition-all duration-200 hover:shadow-md hover:opacity-80"
+                  className="border transition-all duration-200 hover:shadow-md hover:opacity-80"
                 >
                   Start Nieuwe Chat
                 </Button>
