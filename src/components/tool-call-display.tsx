@@ -3,6 +3,25 @@
 import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronRight, Loader2, CheckCircle, XCircle, Clock } from 'lucide-react'
 
+// Human-readable Dutch tool names for MICE Operations
+const TOOL_DISPLAY_NAMES: Record<string, string> = {
+  // Read tools (auto-approved)
+  find_events: 'Events zoeken',
+  get_event_details: 'Event details ophalen',
+  find_customer: 'Klant zoeken',
+  get_customer_details: 'Klantgegevens ophalen',
+  get_event_notes: 'Event notities ophalen',
+  list_venues: 'Locaties ophalen',
+  list_event_types: 'Event types ophalen',
+  list_products: 'Producten ophalen',
+  // Write tools (require permission)
+  manage_event: 'Event beheren',
+  manage_customer: 'Klant beheren',
+  update_event_status: 'Event status wijzigen',
+  add_note: 'Notitie toevoegen',
+  delete_event: 'Event verwijderen',
+}
+
 type ToolCallStatus = 'calling' | 'completed' | 'error'
 
 type ToolCallPayload = {
@@ -113,8 +132,13 @@ export function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
 
   const displayName = useMemo(() => {
     const name = resolvedName ?? 'unknown_tool'
+    // Check for known MICE tools first
+    if (TOOL_DISPLAY_NAMES[name]) {
+      return TOOL_DISPLAY_NAMES[name]
+    }
+    // Fallback to generic transformation
     if (name === 'unknown_tool') return 'Unknown tool'
-    if (name === 'getCurrentTime') return '🕐 Get Current Time'
+    if (name === 'getCurrentTime') return 'Get Current Time'
     const readable = name
       .replace(/([_-]+)/g, ' ')
       .replace(/\s+/g, ' ')
