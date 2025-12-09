@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import type { Message, MessageEvent, DocumentAttachment } from '../lib/types'
+import type { Message, MessageEvent, DocumentAttachment, PendingPermission } from '../lib/types'
 import pb from '@/lib/pocketbase'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -14,20 +14,24 @@ interface UseChatOCREnhancedOptions {
   chatEndpoint?: string
   ocrEndpoint?: string
   transcribeEndpoint?: string
+  permissionEndpoint?: string  // Base URL for permission API (e.g., http://localhost:8000)
   conversationId?: string | null
   assistantType?: string
   onError?: (error: Error) => void
   onFileProcessed?: (file: File, result: any) => void
+  onPermissionRequired?: (permission: PendingPermission) => void
 }
 
 export function useChatOCREnhanced({
   chatEndpoint = '/api/agent',
   ocrEndpoint = '/api/ocr',
   transcribeEndpoint = '/api/transcribe',
+  permissionEndpoint = '',  // Empty = same origin as chatEndpoint
   conversationId,
   assistantType = 'general',
   onError,
-  onFileProcessed
+  onFileProcessed,
+  onPermissionRequired
 }: UseChatOCREnhancedOptions = {}) {
   const { user, logout } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
@@ -35,6 +39,59 @@ export function useChatOCREnhanced({
   const [isLoading, setIsLoading] = useState(false)
   const [documents, setDocuments] = useState<DocumentAttachment[]>([])
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [pendingPermissions, setPendingPermissions] = useState<PendingPermission[]>([])
+
+  // Resolve permission API base URL from chat endpoint
+  const getPermissionApiUrl = useCallback((permissionId: string) => {
+    if (permissionEndpoint) {
+      return `${permissionEndpoint}/api/permission/${permissionId}`
+    }
+    // Extract base URL from chatEndpoint (e.g., http://localhost:8000/chat/stream -> http://localhost:8000)
+    try {
+      const url = new URL(chatEndpoint, window.location.origin)
+      return `${url.origin}/api/permission/${permissionId}`
+    } catch {
+      return `/api/permission/${permissionId}`
+    }
+  }, [chatEndpoint, permissionEndpoint])
+
+  // Approve a pending permission
+  const approvePermission = useCallback(async (permissionId: string) => {
+    try {
+      const response = await fetch(getPermissionApiUrl(permissionId), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approved: true })
+      })
+      if (!response.ok) {
+        throw new Error(`Failed to approve permission: ${response.statusText}`)
+      }
+      // Remove from pending list
+      setPendingPermissions(prev => prev.filter(p => p.permissionId !== permissionId))
+    } catch (error) {
+      console.error('Error approving permission:', error)
+      onError?.(error as Error)
+    }
+  }, [getPermissionApiUrl, onError])
+
+  // Deny a pending permission
+  const denyPermission = useCallback(async (permissionId: string) => {
+    try {
+      const response = await fetch(getPermissionApiUrl(permissionId), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approved: false })
+      })
+      if (!response.ok) {
+        throw new Error(`Failed to deny permission: ${response.statusText}`)
+      }
+      // Remove from pending list
+      setPendingPermissions(prev => prev.filter(p => p.permissionId !== permissionId))
+    } catch (error) {
+      console.error('Error denying permission:', error)
+      onError?.(error as Error)
+    }
+  }, [getPermissionApiUrl, onError])
 
   // Load existing messages from PocketBase when conversation changes
   const loadMessages = useCallback(async () => {
@@ -726,6 +783,37 @@ export function useChatOCREnhanced({
               updateToolCallResult(event.result)
               finishThinkingBlock()
               break
+            case 'permission_required':
+              // Tool requires user permission before execution
+              {
+                const permission: PendingPermission = {
+                  permissionId: event.permission_id,
+                  toolName: event.tool_name,
+                  toolArgs: event.tool_args || {},
+                  conversationId: event.conversation_id || '',
+                  agent: event.agent || ''
+                }
+                setPendingPermissions(prev => [...prev, permission])
+                onPermissionRequired?.(permission)
+              }
+              break
+            case 'permission_denied':
+              // User denied permission - remove from pending and show message
+              setPendingPermissions(prev =>
+                prev.filter(p => p.permissionId !== event.permission_id)
+              )
+              // Add a message indicating the action was cancelled
+              assistantMessage += `\n\n_Actie geannuleerd: ${event.tool_name} is niet uitgevoerd._`
+              appendTextToTimeline(`\n\n_Actie geannuleerd: ${event.tool_name} is niet uitgevoerd._`)
+              break
+            case 'permission_timeout':
+              // Permission request timed out
+              setPendingPermissions(prev =>
+                prev.filter(p => p.permissionId !== event.permission_id)
+              )
+              assistantMessage += `\n\n_Timeout: Geen reactie ontvangen voor ${event.tool_name}._`
+              appendTextToTimeline(`\n\n_Timeout: Geen reactie ontvangen voor ${event.tool_name}._`)
+              break
             default:
               break
           }
@@ -951,7 +1039,7 @@ export function useChatOCREnhanced({
     } finally {
       setIsLoading(false)
     }
-  }, [assistantType, chatEndpoint, conversationId, documents, input, logout, messages, onError])
+  }, [assistantType, chatEndpoint, conversationId, documents, input, logout, messages, onError, onPermissionRequired])
 
   return {
     messages,
@@ -963,6 +1051,10 @@ export function useChatOCREnhanced({
     uploadError,
     handleFileSelect,
     handleFilesDropped,
-    removeDocument
+    removeDocument,
+    // Permission system
+    pendingPermissions,
+    approvePermission,
+    denyPermission
   }
 }

@@ -36,3 +36,11 @@ export interface DocumentAttachment {
   pageCount?: number
   error?: string
 }
+
+export interface PendingPermission {
+  permissionId: string
+  toolName: string
+  toolArgs: Record<string, unknown>
+  conversationId: string
+  agent: string
+}
