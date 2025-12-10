@@ -5,7 +5,6 @@ import { Trash2, Pencil, Check, X, Menu } from "lucide-react"
 import { toast } from "sonner"
 import { useChatOCREnhanced } from "@/hooks/use-chat-ocr-enhanced"
 import ChatContainer from "./chat-container"
-import { PermissionDialog } from "./permission-dialog"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/hooks/use-auth"
@@ -609,6 +608,8 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
                   onSuggestionClick={handleSuggestionClick}
                   accentColor={accentColor}
                   textColor={textColor}
+                  onApprovePermission={approvePermission}
+                  onDenyPermission={denyPermission}
                 />
               </div>
             </>
@@ -653,25 +654,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
         </div>
       </div>
 
-      {/* Permission dialog - shown one at a time with counter */}
-      {pendingPermissions.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="p-4 max-w-md w-full space-y-3">
-            {/* Counter when multiple permissions are pending */}
-            {pendingPermissions.length > 1 && (
-              <div className="text-center text-white text-sm font-medium">
-                Toestemming 1 van {pendingPermissions.length}
-              </div>
-            )}
-            {/* Show only the first pending permission */}
-            <PermissionDialog
-              permission={pendingPermissions[0]}
-              onApprove={approvePermission}
-              onDeny={denyPermission}
-            />
-          </div>
-        </div>
-      )}
+      {/* Permission requests are now shown inline in the chat timeline */}
 
       {isSidebarOpen && (
         <div className="lg:hidden">

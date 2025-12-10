@@ -10,6 +10,7 @@ export type MessageEvent =
   | { type: 'thinking'; content: string; isActive?: boolean }
   | { type: 'tool_call'; toolCall: ToolCall }
   | { type: 'text'; content: string }
+  | { type: 'permission_request'; permission: PendingPermission; status: 'pending' | 'approved' | 'denied' }
 
 export interface Message {
   id: string

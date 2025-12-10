@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import type { Message, MessageEvent, DocumentAttachment, PendingPermission } from '../lib/types'
+import type { Message, MessageEvent, DocumentAttachment, PendingPermission, ToolCall } from '../lib/types'
 import pb from '@/lib/pocketbase'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -55,15 +55,34 @@ export function useChatOCREnhanced({
     }
   }, [chatEndpoint, permissionEndpoint])
 
+  // Helper to update permission status in message timeline
+  const updatePermissionInMessages = useCallback((permissionId: string, status: 'pending' | 'approved' | 'denied') => {
+    setMessages(prev => prev.map(msg => {
+      if (!msg.timeline) return msg
+      const updatedTimeline = msg.timeline.map(event => {
+        if (event.type === 'permission_request' && event.permission.permissionId === permissionId) {
+          return { ...event, status }
+        }
+        return event
+      })
+      return { ...msg, timeline: updatedTimeline }
+    }))
+  }, [])
+
   // Approve a pending permission
   const approvePermission = useCallback(async (permissionId: string) => {
     try {
+      // Update UI immediately for responsiveness
+      updatePermissionInMessages(permissionId, 'approved')
+
       const response = await fetch(getPermissionApiUrl(permissionId), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ approved: true })
       })
       if (!response.ok) {
+        // Revert on error
+        updatePermissionInMessages(permissionId, 'pending')
         throw new Error(`Failed to approve permission: ${response.statusText}`)
       }
       // Remove from pending list
@@ -72,17 +91,22 @@ export function useChatOCREnhanced({
       console.error('Error approving permission:', error)
       onError?.(error as Error)
     }
-  }, [getPermissionApiUrl, onError])
+  }, [getPermissionApiUrl, onError, updatePermissionInMessages])
 
   // Deny a pending permission
   const denyPermission = useCallback(async (permissionId: string) => {
     try {
+      // Update UI immediately for responsiveness
+      updatePermissionInMessages(permissionId, 'denied')
+
       const response = await fetch(getPermissionApiUrl(permissionId), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ approved: false })
       })
       if (!response.ok) {
+        // Revert on error
+        updatePermissionInMessages(permissionId, 'pending')
         throw new Error(`Failed to deny permission: ${response.statusText}`)
       }
       // Remove from pending list
@@ -91,7 +115,7 @@ export function useChatOCREnhanced({
       console.error('Error denying permission:', error)
       onError?.(error as Error)
     }
-  }, [getPermissionApiUrl, onError])
+  }, [getPermissionApiUrl, onError, updatePermissionInMessages])
 
   // Load existing messages from PocketBase when conversation changes
   const loadMessages = useCallback(async () => {
@@ -110,12 +134,37 @@ export function useChatOCREnhanced({
         sort: 'created'
       })
 
-      const loadedMessages: Message[] = result.items.map(msg => ({
-        id: msg.id,
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-        createdAt: msg.created ? new Date(msg.created) : undefined
-      }))
+      const loadedMessages: Message[] = result.items
+        .filter(msg => msg.role !== 'tool') // Filter out tool return messages (internal)
+        .map(msg => {
+          // Parse tool_calls from JSON if present
+          let toolCalls: ToolCall[] | undefined
+          if (msg.tool_calls) {
+            try {
+              const parsed = typeof msg.tool_calls === 'string'
+                ? JSON.parse(msg.tool_calls)
+                : msg.tool_calls
+              if (Array.isArray(parsed)) {
+                toolCalls = parsed.map((tc: any) => ({
+                  id: tc.id || '',
+                  toolName: tc.name || '',
+                  args: tc.arguments || {},
+                  status: 'completed' as const
+                }))
+              }
+            } catch (e) {
+              console.warn('Failed to parse tool_calls:', e)
+            }
+          }
+
+          return {
+            id: msg.id,
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content || '',
+            toolCalls,
+            createdAt: msg.created ? new Date(msg.created) : undefined
+          }
+        })
 
       setMessages(loadedMessages)
     } catch (error: any) {
@@ -357,6 +406,7 @@ export function useChatOCREnhanced({
         let currentThinkingIndex: number | null = null
         let currentTextIndex: number | null = null
         const toolCallTimelineIndex = new Map<string, number>()
+        const permissionTimelineIndex = new Map<string, number>()
 
         const safeParseJson = (value: string) => {
           try {
@@ -640,6 +690,22 @@ export function useChatOCREnhanced({
           }
         }
 
+        const addPermissionToTimeline = (permission: PendingPermission) => {
+          currentTextIndex = null
+          permissionTimelineIndex.set(permission.permissionId, timeline.length)
+          timeline.push({ type: 'permission_request', permission, status: 'pending' })
+        }
+
+        const updatePermissionStatus = (permissionId: string, status: 'approved' | 'denied') => {
+          const existingIndex = permissionTimelineIndex.get(permissionId)
+          if (existingIndex !== undefined) {
+            const event = timeline[existingIndex]
+            if (event && event.type === 'permission_request') {
+              event.status = status
+            }
+          }
+        }
+
         const updateToolCallFromPart = (part: any, index: number) => {
           if (!part) return
           partIndexMap.set(index, { kind: part.part_kind, toolCallId: part.tool_call_id })
@@ -784,7 +850,7 @@ export function useChatOCREnhanced({
               finishThinkingBlock()
               break
             case 'permission_required':
-              // Tool requires user permission before execution
+              // Tool requires user permission before execution - add to timeline as inline message
               {
                 const permission: PendingPermission = {
                   permissionId: event.permission_id,
@@ -794,26 +860,26 @@ export function useChatOCREnhanced({
                   conversationId: event.conversation_id || '',
                   agent: event.agent || ''
                 }
+                // Add permission to timeline for inline display
+                addPermissionToTimeline(permission)
+                // Also keep in pendingPermissions for tracking (but not for overlay display)
                 setPendingPermissions(prev => [...prev, permission])
                 onPermissionRequired?.(permission)
               }
               break
             case 'permission_denied':
-              // User denied permission - remove from pending and show message
+              // User denied permission - update timeline status
+              updatePermissionStatus(event.permission_id, 'denied')
               setPendingPermissions(prev =>
                 prev.filter(p => p.permissionId !== event.permission_id)
               )
-              // Add a message indicating the action was cancelled
-              assistantMessage += `\n\n_Actie geannuleerd: ${event.tool_name} is niet uitgevoerd._`
-              appendTextToTimeline(`\n\n_Actie geannuleerd: ${event.tool_name} is niet uitgevoerd._`)
               break
             case 'permission_timeout':
-              // Permission request timed out
+              // Permission request timed out - update timeline status to denied
+              updatePermissionStatus(event.permission_id, 'denied')
               setPendingPermissions(prev =>
                 prev.filter(p => p.permissionId !== event.permission_id)
               )
-              assistantMessage += `\n\n_Timeout: Geen reactie ontvangen voor ${event.tool_name}._`
-              appendTextToTimeline(`\n\n_Timeout: Geen reactie ontvangen voor ${event.tool_name}._`)
               break
             default:
               break
@@ -973,40 +1039,27 @@ export function useChatOCREnhanced({
 
       if (assistantTempId) {
         if (finalAssistantMessage) {
+          // Update temp message with final content
           setMessages(prev => prev.map(msg =>
             msg.id === assistantTempId
               ? { ...msg, content: finalAssistantMessage }
               : msg
           ))
 
+          // Backend now saves all messages (including tool calls) to PocketBase
+          // Give backend a moment to persist, then reload to get authoritative state
+          // This ensures tool calls are properly loaded with their persisted IDs
+          await new Promise(resolve => setTimeout(resolve, 500))
+          await loadMessages()
+
+          // Update conversation metadata
           try {
-            const createdAssistantMessage = await pb.collection('messages').create({
-              conversationId,
-              userId: authUserId,
-              role: 'assistant',
-              content: finalAssistantMessage
+            await pb.collection('conversations').update(conversationId, {
+              lastMessage: finalAssistantMessage.slice(0, 100),
+              lastMessageAt: new Date().toISOString()
             })
-
-            setMessages(prev => prev.map(msg =>
-              msg.id === assistantTempId
-                ? {
-                    ...msg,
-                    id: createdAssistantMessage.id,
-                    createdAt: createdAssistantMessage.created ? new Date(createdAssistantMessage.created) : msg.createdAt
-                  }
-                : msg
-            ))
-
-            try {
-              await pb.collection('conversations').update(conversationId, {
-                lastMessage: finalAssistantMessage.slice(0, 100),
-                lastMessageAt: new Date().toISOString()
-              })
-            } catch (updateError) {
-              console.error('Failed to update conversation metadata:', updateError)
-            }
-          } catch (persistError) {
-            console.error('Failed to persist assistant message:', persistError)
+          } catch (updateError) {
+            console.error('Failed to update conversation metadata:', updateError)
           }
         } else {
           setMessages(prev => prev.filter(msg => msg.id !== assistantTempId))
@@ -1040,7 +1093,7 @@ export function useChatOCREnhanced({
     } finally {
       setIsLoading(false)
     }
-  }, [assistantType, chatEndpoint, conversationId, documents, input, logout, messages, onError, onPermissionRequired])
+  }, [assistantType, chatEndpoint, conversationId, documents, input, loadMessages, logout, messages, onError, onPermissionRequired])
 
   return {
     messages,
