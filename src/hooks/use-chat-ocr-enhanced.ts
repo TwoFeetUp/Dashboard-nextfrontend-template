@@ -973,7 +973,18 @@ export function useChatOCREnhanced({
                 const parsed = JSON.parse(data)
 
                 if (parsed.error || parsed.errorText) {
-                  throw new Error(parsed.error || parsed.errorText)
+                  // Don't throw - instead append error as message content
+                  // This preserves any existing streamed content
+                  const errorMsg = parsed.error || parsed.errorText
+                  console.error('[SSE] Server error:', errorMsg)
+                  if (assistantMessage) {
+                    assistantMessage += `\n\n⚠️ ${errorMsg}`
+                  } else {
+                    assistantMessage = `⚠️ ${errorMsg}`
+                  }
+                  appendTextToTimeline(`\n\n⚠️ ${errorMsg}`)
+                  syncAssistantState()
+                  continue
                 }
 
                 if (parsed.event_kind) {
