@@ -41,6 +41,7 @@ export interface PendingPermission {
   permissionId: string
   toolName: string
   toolArgs: Record<string, unknown>
+  toolCallId?: string  // pydantic-ai's tool call ID for deferred results
   conversationId: string
   agent: string
 }

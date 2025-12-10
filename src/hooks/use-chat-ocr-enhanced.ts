@@ -790,6 +790,7 @@ export function useChatOCREnhanced({
                   permissionId: event.permission_id,
                   toolName: event.tool_name,
                   toolArgs: event.tool_args || {},
+                  toolCallId: event.tool_call_id,  // pydantic-ai's tool call ID
                   conversationId: event.conversation_id || '',
                   agent: event.agent || ''
                 }
