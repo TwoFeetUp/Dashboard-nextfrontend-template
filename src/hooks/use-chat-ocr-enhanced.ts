@@ -1046,11 +1046,10 @@ export function useChatOCREnhanced({
               : msg
           ))
 
-          // Backend now saves all messages (including tool calls) to PocketBase
-          // Give backend a moment to persist, then reload to get authoritative state
-          // This ensures tool calls are properly loaded with their persisted IDs
-          await new Promise(resolve => setTimeout(resolve, 500))
-          await loadMessages()
+          // NOTE: We no longer reload messages from PocketBase after streaming.
+          // The streamed message is already visible to the user.
+          // Reloading would cause the message to disappear if backend failed to save.
+          // The backend should save messages, but we don't depend on it for display.
 
           // Update conversation metadata
           try {
