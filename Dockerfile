@@ -4,12 +4,9 @@
 # Multi-stage build for optimized production image
 
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
+FROM oven/bun:1.1.38-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-# Install bun for faster package installation (pin for reproducible builds)
-RUN npm install -g bun@1.1.38
 
 # Copy package files
 COPY package.json bun.lock* ./
