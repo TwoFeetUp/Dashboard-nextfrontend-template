@@ -98,8 +98,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
 
     try {
+      const normalizedEmail = data.email.trim().toLowerCase();
       const authData = await pb.collection('users').authWithPassword(
-        data.email,
+        normalizedEmail,
         data.password
       );
 
@@ -121,9 +122,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
 
     try {
+      const normalizedEmail = data.email.trim().toLowerCase();
       // Create new user
       const user = await pb.collection('users').create({
-        email: data.email,
+        email: normalizedEmail,
         emailVisibility: true,
         password: data.password,
         passwordConfirm: data.passwordConfirm,
@@ -133,12 +135,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Auto-login after successful signup
       await login({
-        email: data.email,
+        email: normalizedEmail,
         password: data.password,
       });
 
       // Optionally send verification email
-      await pb.collection('users').requestVerification(data.email);
+      await pb.collection('users').requestVerification(normalizedEmail);
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to create account. Please try again.';
       setError(errorMessage);
