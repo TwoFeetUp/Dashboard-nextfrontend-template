@@ -10,8 +10,6 @@ import { useState, useEffect } from "react"
 
 import { useAuth } from "@/hooks/use-auth"
 
-import { useChat } from "@ai-sdk/react"
-
 import { Button } from "@/components/ui/button"
 
 import { Input } from "@/components/ui/input"
@@ -19,8 +17,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-
-import { ScrollArea } from "@/components/ui/scroll-area"
 
 import {
 
@@ -58,36 +54,6 @@ interface UserProfile {
   role: string
 
 }
-
-
-
-interface ChatMessage {
-
-  id: string
-
-  content: string
-
-  sender: "user" | "assistant"
-
-  timestamp: Date
-
-}
-
-
-
-interface ChatSession {
-
-  id: string
-
-  name: string
-
-  messages: ChatMessage[]
-
-  createdAt: Date
-
-}
-
-
 
 export default function HomePage() {
 
@@ -445,59 +411,86 @@ function Dashboard({
 
   const [showProfile, setShowProfile] = useState(false)
 
+  type ToolCard = {
+    id: string
+    name: string
+    description: string
+    icon: any
+    available: boolean
+    error?: string | null
+    model?: string
+  }
 
+  const [tools, setTools] = useState<ToolCard[]>([])
+  const [toolsError, setToolsError] = useState<string | null>(null)
 
-  const tools = [
+  useEffect(() => {
+    let cancelled = false
 
-    {
+    const loadTools = async () => {
+      try {
+        setToolsError(null)
+        const response = await fetch('/api/agents', { cache: 'no-store' })
+        if (!response.ok) {
+          const text = await response.text()
+          throw new Error(text || `Agent backend error (status ${response.status})`)
+        }
 
-      id: "contract-clearance",
+        const json = await response.json()
+        const agents = json?.agents ?? {}
 
-      name: "Contract Clearance",
+        const displayNames: Record<string, string> = {
+          'contract-clearance': 'Contract Clearance',
+          'event-planner': 'Event Planner',
+          'event-contract-assistant': 'Event Contract Assistant',
+          'marketing-communicatie': 'Marketing en Communicatie',
+          'test-model': 'Test Model',
+        }
 
-      description: "AI-assistent voor contractbeheer en -controle",
+        const icons: Record<string, any> = {
+          'contract-clearance': FileText,
+          'event-planner': Calendar,
+          'event-contract-assistant': FileCheck,
+          'marketing-communicatie': Megaphone,
+          'test-model': AlertCircle,
+        }
 
-      icon: FileText,
+        const toTitle = (value: string) =>
+          value
+            .split('-')
+            .filter(Boolean)
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ')
 
-    },
+        const toolCards: ToolCard[] = Object.entries(agents).map(([id, agent]: any) => ({
+          id,
+          name: displayNames[id] || toTitle(id),
+          description: agent?.description || '',
+          icon: icons[id] || AlertCircle,
+          available: agent?.available !== false,
+          error: agent?.error ?? null,
+          model: agent?.model
+        }))
 
-    {
+        toolCards.sort((a, b) => a.name.localeCompare(b.name))
 
-      id: "event-planner",
+        if (!cancelled) {
+          setTools(toolCards)
+        }
+      } catch (error: any) {
+        console.error('Failed to load tools:', error)
+        if (!cancelled) {
+          setTools([])
+          setToolsError(error?.message || 'Failed to load tools')
+        }
+      }
+    }
 
-      name: "Event Planner",
-
-      description: "AI-assistent voor evenement planning en organisatie",
-
-      icon: Calendar,
-
-    },
-
-    {
-
-      id: "event-contract-assistant",
-
-      name: "Event Contract Assistant",
-
-      description: "AI-assistent voor het opstellen van event contracten",
-
-      icon: FileCheck,
-
-    },
-
-    {
-
-      id: "marketing-communicatie",
-
-      name: "Marketing en Communicatie",
-
-      description: "AI-assistent voor marketing en communicatie",
-
-      icon: Megaphone,
-
-    },
-
-  ]
+    loadTools()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
 
 
@@ -627,27 +620,14 @@ function Dashboard({
 
         {/* Tool Content */}
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 overflow-hidden">
-
-          {selectedTool === "contract-clearance" && (
-
-            <ChatInterfaceEnhanced toolName="Contract Clearance" toolId="contract-clearance" />
-
-          )}
-
-          {selectedTool === "event-planner" && <ChatInterfaceEnhanced toolName="Event Planner" toolId="event-planner" />}
-
-          {selectedTool === "event-contract-assistant" && (
-
-            <ChatInterfaceEnhanced toolName="Event Contract Assistant" toolId="event-contract-assistant" />
-
-          )}
-
-          {selectedTool === "marketing-communicatie" && (
-
-            <ChatInterfaceEnhanced toolName="Marketing en Communicatie" toolId="marketing-communicatie" />
-
-          )}
+        <main className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8 py-6 flex-1 min-h-0 overflow-hidden">
+          {(() => {
+            const selected = tools.find((tool) => tool.id === selectedTool)
+            if (!selected) return null
+            return (
+              <ChatInterfaceEnhanced toolName={selected.name} toolId={selected.id} />
+            )
+          })()}
 
         </main>
 
@@ -757,6 +737,12 @@ function Dashboard({
 
         </div>
 
+        {toolsError && (
+          <div className="mb-6 border border-red-200 bg-red-50 text-red-700 rounded-md p-4 text-sm">
+            Kon tools niet laden: {toolsError}
+          </div>
+        )}
+
 
 
         {/* Tools Grid */}
@@ -773,9 +759,13 @@ function Dashboard({
 
                 key={tool.id}
 
-                className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-[#ffd1b0] hover:border-[#ffa366] bg-white"
+                className={`transition-all duration-200 border-[#ffd1b0] bg-white ${
+                  tool.available
+                    ? 'cursor-pointer hover:shadow-lg hover:scale-105 hover:border-[#ffa366]'
+                    : 'opacity-60 cursor-not-allowed'
+                }`}
 
-                onClick={() => setSelectedTool(tool.id)}
+                onClick={() => tool.available && setSelectedTool(tool.id)}
 
               >
 
@@ -790,6 +780,12 @@ function Dashboard({
                   <CardTitle className="text-lg font-semibold text-gray-900">{tool.name}</CardTitle>
 
                   <CardDescription className="text-sm text-gray-600">{tool.description}</CardDescription>
+
+                  {!tool.available && tool.error && (
+                    <CardDescription className="text-xs text-red-600 mt-2">
+                      Unavailable: {tool.error}
+                    </CardDescription>
+                  )}
 
                 </CardHeader>
 
@@ -1142,4 +1138,3 @@ function ProfileManagement({
   )
 
 }
-

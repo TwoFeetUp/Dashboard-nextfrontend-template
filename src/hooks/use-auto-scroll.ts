@@ -5,6 +5,7 @@ import {
   useCallback,
   useMemo,
   useLayoutEffect,
+  useEffect,
   type DependencyList
 } from 'react'
 
@@ -14,26 +15,54 @@ interface UseAutoScrollOptions {
   isStreaming?: boolean
 }
 
+type ScrollToBottomOptions = {
+  force?: boolean
+  behavior?: ScrollBehavior
+}
+
 export function useAutoScroll({
   dependencies,
   threshold = 100,
   isStreaming = false,
 }: UseAutoScrollOptions = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const isUserScrollingRef = useRef(false)
-  const trackedDependenciesRef = useRef<DependencyList | null>(null)
   const lastScrollTopRef = useRef(0)
+  const isAutoScrollEnabledRef = useRef(true)
+  const trackedDependenciesRef = useRef<DependencyList | null>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const isProgrammaticScrollRef = useRef(false)
+  const rafRef = useRef<number | null>(null)
 
   const resolvedDependencies = useMemo(() => dependencies ?? [], [dependencies])
 
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useCallback((options: ScrollToBottomOptions = {}) => {
     const container = containerRef.current
-    if (!container || isUserScrollingRef.current) {
+    if (!container) {
       return
     }
 
-    container.scrollTop = container.scrollHeight
-    lastScrollTopRef.current = container.scrollTop
+    const { force = false, behavior = 'smooth' } = options
+
+    if (force) {
+      isAutoScrollEnabledRef.current = true
+    }
+
+    if (!force && !isAutoScrollEnabledRef.current) {
+      return
+    }
+
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+    }
+
+    rafRef.current = requestAnimationFrame(() => {
+      isProgrammaticScrollRef.current = true
+      container.scrollTo({ top: container.scrollHeight, behavior })
+
+      requestAnimationFrame(() => {
+        isProgrammaticScrollRef.current = false
+      })
+    })
   }, [])
 
   const handleScroll = useCallback(() => {
@@ -49,34 +78,38 @@ export function useAutoScroll({
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight
     const scrolledUp = scrollTop < previousScrollTop
 
+    if (isProgrammaticScrollRef.current) {
+      return
+    }
+
     if (isStreaming && scrolledUp) {
-      if (!isUserScrollingRef.current) {
-        isUserScrollingRef.current = true
-      }
+      isAutoScrollEnabledRef.current = false
       return
     }
 
-    if (distanceFromBottom <= threshold) {
-      // User returned near the bottom; clear the scrolling flag.
-      const wasUserScrolling = isUserScrollingRef.current
-      isUserScrollingRef.current = false
-
-      if (wasUserScrolling && !scrolledUp) {
-        container.scrollTop = container.scrollHeight
-        lastScrollTopRef.current = container.scrollTop
-      }
-      return
-    }
-
-    // User is scrolling if they're more than threshold pixels from bottom
-    if (!isUserScrollingRef.current && distanceFromBottom > threshold) {
-      isUserScrollingRef.current = true
-    }
+    isAutoScrollEnabledRef.current = distanceFromBottom <= threshold
   }, [isStreaming, threshold])
 
   const resetUserScrolling = useCallback(() => {
-    isUserScrollingRef.current = false
-  }, [])
+    scrollToBottom({ force: true, behavior: 'smooth' })
+  }, [scrollToBottom])
+
+  useEffect(() => {
+    const content = contentRef.current
+    if (!content) {
+      return
+    }
+
+    const observer = new ResizeObserver(() => {
+      scrollToBottom({ behavior: 'smooth' })
+    })
+
+    observer.observe(content)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [scrollToBottom])
 
   // Auto-scroll when dependencies change
   useLayoutEffect(() => {
@@ -98,7 +131,7 @@ export function useAutoScroll({
 
     trackedDependenciesRef.current = resolvedDependencies
 
-    if (!dependenciesChanged || isUserScrollingRef.current) {
+    if (!dependenciesChanged) {
       return
     }
 
@@ -107,6 +140,7 @@ export function useAutoScroll({
 
   return {
     containerRef,
+    contentRef,
     scrollToBottom,
     handleScroll,
     resetUserScrolling

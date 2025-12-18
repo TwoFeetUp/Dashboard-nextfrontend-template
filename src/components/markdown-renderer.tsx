@@ -39,7 +39,7 @@ const markdownComponents: Components = {
   table: ({ children }) => (
     <div className="my-4 w-full max-w-full overflow-hidden">
       <div className="max-w-full overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="w-full table-auto divide-y divide-gray-200">{children}</table>
+        <table className="w-full table-fixed divide-y divide-gray-200">{children}</table>
       </div>
     </div>
   ),

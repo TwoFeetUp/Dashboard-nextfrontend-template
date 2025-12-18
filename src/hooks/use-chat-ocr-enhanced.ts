@@ -45,6 +45,10 @@ export function useChatOCREnhanced({
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
+        toolCalls: msg.metadata?.toolCalls,
+        reasoning: msg.metadata?.reasoning,
+        timeline: msg.metadata?.timeline,
+        isThinking: msg.metadata?.isThinking,
         createdAt: msg.created ? new Date(msg.created) : undefined
       }))
 
@@ -206,6 +210,7 @@ export function useChatOCREnhanced({
     let assistantTempId: string | null = null
     let assistantMessage = ''
     let userMessagePersisted = false
+    let assistantMetadata: Record<string, any> | undefined
 
     try {
       const createdUserMessage = await pb.collection('messages').create({
@@ -444,6 +449,44 @@ export function useChatOCREnhanced({
           }
           toolCallState.set(toolCallId, existing)
           return existing
+        }
+
+        const buildAssistantMetadata = () => {
+          const formattedToolCalls = toolCallHistory.map(call => {
+            const parsedArgs = call.args ?? (call.rawArgs ? safeParseJson(call.rawArgs) : undefined)
+            return {
+              id: call.id,
+              toolName: call.toolName,
+              status: call.status,
+              result: call.result,
+              args: parsedArgs
+            }
+          })
+
+          const activeReasoning = (() => {
+            if (!isThinking) return undefined
+            if (currentThinkingIndex === null) return undefined
+            const event = timeline[currentThinkingIndex]
+            return event && event.type === 'thinking' ? event.content : undefined
+          })()
+          const allReasoning = activeReasoning
+            ? [...reasoningBlocks, activeReasoning]
+            : reasoningBlocks
+
+          const toolCalls = formattedToolCalls.length > 0 ? formattedToolCalls : undefined
+          const reasoningValue = allReasoning.length > 0 ? [...allReasoning] : undefined
+          const timelineEvents = timeline.length > 0 ? [...timeline] : undefined
+
+          if (!toolCalls && !reasoningValue && !timelineEvents) {
+            return undefined
+          }
+
+          return {
+            toolCalls,
+            reasoning: reasoningValue,
+            timeline: timelineEvents,
+            isThinking: false
+          }
         }
 
         const syncAssistantState = () => {
@@ -828,6 +871,9 @@ export function useChatOCREnhanced({
             }
           }
         }
+
+        finishThinkingBlock()
+        assistantMetadata = buildAssistantMetadata()
       }
 
       const finalAssistantMessage = assistantMessage.trim()
@@ -845,7 +891,8 @@ export function useChatOCREnhanced({
               conversationId,
               userId: authUserId,
               role: 'assistant',
-              content: finalAssistantMessage
+              content: finalAssistantMessage,
+              metadata: assistantMetadata
             })
 
             setMessages(prev => prev.map(msg =>
