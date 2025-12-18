@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { MistralClient, DocumentInput } from '../../../lib/mistral-client'
+
+const isTextFile = (mimeType: string | undefined, filename: string | undefined): boolean => {
+  if (mimeType === 'text/plain' || mimeType === 'text/markdown' || mimeType === 'application/x-markdown') {
+    return true
+  }
+
+  if (filename) {
+    const lowerFilename = filename.toLowerCase()
+    return lowerFilename.endsWith('.txt') || lowerFilename.endsWith('.md') || lowerFilename.endsWith('.markdown')
+  }
+
+  return false
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,11 +30,25 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (isTextFile(mimeType, filename)) {
+      const text = document === '' ? '' : Buffer.from(document, 'base64').toString('utf-8')
+      return NextResponse.json({
+        success: true,
+        text,
+        characterCount: text.length,
+        pageCount: 1,
+        metadata: {
+          format: mimeType ?? 'text/plain',
+          directPassThrough: true,
+        },
+      })
+    }
+
     // Initialize Mistral client
-    const apiKey = process.env.MISTRAL_API_KEY
+    const apiKey = process.env.MISTRAL_API_KEY?.trim()
 
     if (!apiKey || !apiKey.trim()) {
-      console.error('dY"? Mistral API key missing for OCR route')
+      console.error('Mistral API key missing for OCR route')
       return NextResponse.json(
         {
           success: false,
@@ -33,59 +59,70 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log('dY"? OCR route using Mistral key length:', apiKey.trim().length)
-    const mistralClient = new MistralClient(apiKey)
-
     // Process OCR using Mistral's OCR model
-    console.log('🔄 Starting OCR processing for:', {
-      filename,
-      mimeType,
-      documentSize: document.length,
-      includeImageBase64
-    })
+    const effectiveMimeType = mimeType?.trim() || 'application/octet-stream'
+    const dataUrl = `data:${effectiveMimeType};base64,${document}`
+    const isImage = effectiveMimeType.startsWith('image/')
 
-    // Prepare document input
-    const documentInput: DocumentInput = {
-      type: mimeType?.includes('image') ? 'image_url' : 'document_url',
-      content: document,
-      filename,
-      mimeType
+    const mistralPayload = {
+      model: 'mistral-ocr-latest',
+      document: isImage
+        ? { type: 'image_url', image_url: dataUrl }
+        : { type: 'document_url', document_url: dataUrl },
+      include_image_base64: includeImageBase64,
     }
 
-    const result = await mistralClient.processOCR(documentInput, {
-      includeImageBase64,
-      language: 'nl' // Default to Dutch, can be made configurable
+    const response = await fetch('https://api.mistral.ai/v1/ocr', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(mistralPayload),
     })
 
-    console.log('📊 OCR Result:', {
-      filename,
-      hasText: !!result.text,
-      textLength: result.text?.length || 0,
-      pages: result.pages,
-      characterCount: result.characterCount
-    })
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      console.error('Mistral OCR API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText,
+      })
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to process document',
+          message: errorText || response.statusText,
+        },
+        { status: 502 },
+      )
+    }
+
+    const mistralResult = (await response.json()) as { pages?: Array<{ markdown?: string }> }
+    const extractedText = mistralResult.pages?.map((page) => page.markdown || '').join('\n\n') ?? ''
+    const pageCount = mistralResult.pages?.length ?? 0
 
     // Check character and page limits
     const MAX_CHARACTERS = 100000
     const MAX_PAGES = 100
 
-    if (result.characterCount > MAX_CHARACTERS) {
+    if (extractedText.length > MAX_CHARACTERS) {
       return NextResponse.json(
         { 
           error: 'Document exceeds character limit',
-          message: `Document has ${result.characterCount} characters, maximum is ${MAX_CHARACTERS}`,
-          characterCount: result.characterCount
+          message: `Document has ${extractedText.length} characters, maximum is ${MAX_CHARACTERS}`,
+          characterCount: extractedText.length
         },
         { status: 413 }
       )
     }
 
-    if (result.pages && result.pages > MAX_PAGES) {
+    if (pageCount > MAX_PAGES) {
       return NextResponse.json(
         { 
           error: 'Document exceeds page limit',
-          message: `Document has ${result.pages} pages, maximum is ${MAX_PAGES}`,
-          pageCount: result.pages
+          message: `Document has ${pageCount} pages, maximum is ${MAX_PAGES}`,
+          pageCount
         },
         { status: 413 }
       )
@@ -93,10 +130,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      text: result.text,
-      characterCount: result.characterCount,
-      pageCount: result.pages,
-      metadata: result.metadata
+      text: extractedText,
+      characterCount: extractedText.length,
+      pageCount,
     })
   } catch (error: any) {
     console.error('OCR processing error:', error)
