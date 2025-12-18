@@ -8,8 +8,8 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install bun for faster package installation
-RUN npm install -g bun
+# Install bun for faster package installation (pin for reproducible builds)
+RUN npm install -g bun@1.1.38
 
 # Copy package files
 COPY package.json bun.lock* ./
