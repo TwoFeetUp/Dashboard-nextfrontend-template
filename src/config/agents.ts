@@ -34,6 +34,8 @@ export interface AgentConfig {
   textColor?: string
   /** Optional: category for grouping agents */
   category?: "hr" | "prompts" | "content" | "knowledge" | "general" | "operations"
+  /** Optional: mark agent as coming soon (shows as disabled with badge) */
+  comingSoon?: boolean
 }
 
 /**
@@ -90,6 +92,7 @@ export const agents: AgentConfig[] = [
     category: "operations",
     accentColor: "#000000",
     textColor: "#ffffff",
+    comingSoon: true,
   },
 ]
 

@@ -36,7 +36,7 @@ import {
 
 } from "@/components/ui/dropdown-menu"
 
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Construction } from "lucide-react"
 
 import { useRouter } from "next/navigation"
 
@@ -604,6 +604,7 @@ function Dashboard({
           {tools.map((tool) => {
 
             const IconComponent = tool.icon
+            const isComingSoon = tool.comingSoon
 
             return (
 
@@ -611,16 +612,33 @@ function Dashboard({
 
                 key={tool.id}
 
-                className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-lht-black/20 hover:border-lht-black bg-white"
+                className={`transition-all duration-200 border-lht-black/20 bg-white relative ${
+                  isComingSoon
+                    ? 'opacity-60 cursor-not-allowed'
+                    : 'cursor-pointer hover:shadow-lg hover:scale-105 hover:border-lht-black'
+                }`}
 
-                onClick={() => router.push(`/chat/${tool.id}`)}
+                onClick={() => {
+                  if (!isComingSoon) {
+                    router.push(`/chat/${tool.id}`)
+                  }
+                }}
 
               >
+
+                {isComingSoon && (
+                  <div className="absolute top-4 right-4 bg-yellow-500 text-black text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
+                    <Construction className="w-3 h-3" />
+                    Under Construction
+                  </div>
+                )}
 
                 <CardHeader className="text-center">
 
                   <div
-                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                    className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                      isComingSoon ? 'grayscale' : ''
+                    }`}
                     style={{ backgroundColor: tool.accentColor || '#a1d980' }}
                   >
 
@@ -628,7 +646,9 @@ function Dashboard({
 
                   </div>
 
-                  <CardTitle className="text-lg font-semibold text-lht-black">{tool.name}</CardTitle>
+                  <CardTitle className={`text-lg font-semibold ${isComingSoon ? 'text-lht-black/60' : 'text-lht-black'}`}>
+                    {tool.name}
+                  </CardTitle>
 
                   <CardDescription className="text-sm text-lht-black/60">{tool.description}</CardDescription>
 
