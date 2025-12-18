@@ -182,9 +182,11 @@ export function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
 
   if (status === 'calling') {
     return (
-      <div className="inline-flex items-center gap-2 px-2 py-1 bg-blue-50 border border-blue-200 rounded-md text-xs my-1">
-        {icon}
-        <span className="text-blue-700 truncate">{displayName}</span>
+      <div className="block w-full my-1">
+        <div className="flex w-full items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-left text-xs">
+          {icon}
+          <span className="min-w-0 flex-1 truncate text-blue-700">{displayName}</span>
+        </div>
       </div>
     )
   }
@@ -203,7 +205,7 @@ export function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
         } ${hasDetails ? 'cursor-pointer' : 'cursor-default'}`}
       >
         {icon}
-        <span className={`flex-1 font-medium truncate ${
+        <span className={`min-w-0 flex-1 font-medium truncate ${
           status === 'completed' ? 'text-green-700' : 'text-red-700'
         }`}>
           {displayName}
@@ -220,7 +222,7 @@ export function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
       </button>
 
       {isExpanded && hasDetails && (
-        <div className="mt-1 ml-5 rounded-md border border-gray-200 bg-white p-2 shadow-sm space-y-2">
+        <div className="mt-1 w-full max-w-full overflow-hidden rounded-md border border-gray-200 bg-white p-2 pl-5 shadow-sm space-y-2">
           <div className="rounded border border-gray-200 bg-gray-50">
             <div className="border-b border-gray-200 px-3 py-1">
               <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Tool call</span>

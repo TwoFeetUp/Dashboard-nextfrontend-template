@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Brain, Loader2 } from 'lucide-react'
 import { useAutoScroll } from '../hooks/use-auto-scroll'
 import DragDropZone from './drag-drop-zone'
@@ -62,20 +62,13 @@ export default function ChatContainer({
 }: ChatContainerProps) {
   const { 
     containerRef: messagesContainerRef, 
-    scrollToBottom, 
     handleScroll, 
     resetUserScrolling 
   } = useAutoScroll({
     dependencies: [messages],
+    isStreaming: isLoading,
     threshold: 100
   })
-
-  useEffect(() => {
-    if (messages.length > 0 && messages[messages.length - 1]?.role === 'user') {
-      resetUserScrolling()
-      setTimeout(() => scrollToBottom(), 50)
-    }
-  }, [messages, resetUserScrolling, scrollToBottom])
 
   const handleSuggestionSelection = (suggestion: string) => {
     resetUserScrolling()
@@ -115,11 +108,14 @@ export default function ChatContainer({
   }, [messages, isLoading, accentColor, textColor, onApprovePermission, onDenyPermission])
 
   return (
-    <div className="flex-1 border-r border-gray-200 flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#f6f6ed' }}>
+    <div
+      className="flex-1 min-w-0 border-r border-gray-200 flex flex-col h-full overflow-hidden"
+      style={{ backgroundColor: '#f6f6ed' }}
+    >
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 min-h-0"
+        className="flex-1 overflow-y-auto p-4 min-h-0 chat-scroll-container"
       >
         {messages.length === 0 ? (
           <NewChatSuggestions

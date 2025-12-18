@@ -51,7 +51,7 @@ export function ThinkingIndicator({ reasoning, isThinking, className }: Thinking
                 className="flex items-start gap-2 text-sm text-muted-foreground"
               >
                 <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-purple-500" />
-                <span>{step}</span>
+                <span className="min-w-0 whitespace-pre-wrap break-words">{step}</span>
               </div>
             ))}
           </div>

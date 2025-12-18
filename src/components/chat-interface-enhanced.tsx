@@ -556,11 +556,11 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
   return (
     <>
       <div className="flex h-full flex-col gap-4 lg:flex-row">
-        <div className="hidden lg:flex lg:w-72">
+        <div className="hidden lg:flex lg:w-72 flex-none">
           {renderSidebar('desktop')}
         </div>
 
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 min-w-0">
           {currentSession ? (
             <>
               <div className="p-4 border border-lht-black/10 rounded-t-lg bg-white border-b-0">
