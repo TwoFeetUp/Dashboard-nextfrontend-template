@@ -62,6 +62,7 @@ export default function ChatContainer({
 }: ChatContainerProps) {
   const { 
     containerRef: messagesContainerRef, 
+    contentRef: messagesContentRef,
     handleScroll, 
     resetUserScrolling 
   } = useAutoScroll({
@@ -117,17 +118,19 @@ export default function ChatContainer({
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto p-4 min-h-0 chat-scroll-container"
       >
-        {messages.length === 0 ? (
-          <NewChatSuggestions
-            icon={placeholder.icon}
-            title={placeholder.title}
-            subtitle={placeholder.subtitle}
-            suggestions={suggestions}
-            onSelectSuggestion={handleSuggestionSelection}
-          />
-        ) : (
-          messageList
-        )}
+        <div ref={messagesContentRef} className="min-h-full">
+          {messages.length === 0 ? (
+            <NewChatSuggestions
+              icon={placeholder.icon}
+              title={placeholder.title}
+              subtitle={placeholder.subtitle}
+              suggestions={suggestions}
+              onSelectSuggestion={handleSuggestionSelection}
+            />
+          ) : (
+            messageList
+          )}
+        </div>
       </div>
       
       <div className="flex-shrink-0 border-t border-border bg-white">

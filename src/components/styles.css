@@ -75,7 +75,7 @@
 }
 
 .markdown-content table {
-  table-layout: auto;
+  table-layout: fixed;
   width: 100%;
   max-width: 100%;
 }
@@ -142,4 +142,5 @@
 .chat-scroll-container {
   scrollbar-gutter: stable;
   overscroll-behavior: contain;
+  scroll-behavior: smooth;
 }

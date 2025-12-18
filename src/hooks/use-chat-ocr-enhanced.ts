@@ -137,9 +137,11 @@ export function useChatOCREnhanced({
       const loadedMessages: Message[] = result.items
         .filter(msg => msg.role !== 'tool') // Filter out tool return messages (internal)
         .map(msg => {
-          // Parse tool_calls from JSON if present
-          let toolCalls: ToolCall[] | undefined
-          if (msg.tool_calls) {
+          // Prefer structured tool calls stored in message metadata.
+          let toolCalls: ToolCall[] | undefined = msg.metadata?.toolCalls
+
+          // Backwards compatibility: older messages may have `tool_calls` as a JSON string.
+          if (!toolCalls && msg.tool_calls) {
             try {
               const parsed = typeof msg.tool_calls === 'string'
                 ? JSON.parse(msg.tool_calls)
@@ -162,6 +164,9 @@ export function useChatOCREnhanced({
             role: msg.role as 'user' | 'assistant',
             content: msg.content || '',
             toolCalls,
+            reasoning: msg.metadata?.reasoning,
+            timeline: msg.metadata?.timeline,
+            isThinking: msg.metadata?.isThinking,
             createdAt: msg.created ? new Date(msg.created) : undefined
           }
         })
@@ -325,6 +330,7 @@ export function useChatOCREnhanced({
     let assistantTempId: string | null = null
     let assistantMessage = ''
     let userMessagePersisted = false
+    let assistantMetadata: Record<string, any> | undefined
 
     try {
       const createdUserMessage = await pb.collection('messages').create({
@@ -564,6 +570,44 @@ export function useChatOCREnhanced({
           }
           toolCallState.set(toolCallId, existing)
           return existing
+        }
+
+        const buildAssistantMetadata = () => {
+          const formattedToolCalls = toolCallHistory.map(call => {
+            const parsedArgs = call.args ?? (call.rawArgs ? safeParseJson(call.rawArgs) : undefined)
+            return {
+              id: call.id,
+              toolName: call.toolName,
+              status: call.status,
+              result: call.result,
+              args: parsedArgs
+            }
+          })
+
+          const activeReasoning = (() => {
+            if (!isThinking) return undefined
+            if (currentThinkingIndex === null) return undefined
+            const event = timeline[currentThinkingIndex]
+            return event && event.type === 'thinking' ? event.content : undefined
+          })()
+          const allReasoning = activeReasoning
+            ? [...reasoningBlocks, activeReasoning]
+            : reasoningBlocks
+
+          const toolCalls = formattedToolCalls.length > 0 ? formattedToolCalls : undefined
+          const reasoningValue = allReasoning.length > 0 ? [...allReasoning] : undefined
+          const timelineEvents = timeline.length > 0 ? [...timeline] : undefined
+
+          if (!toolCalls && !reasoningValue && !timelineEvents) {
+            return undefined
+          }
+
+          return {
+            toolCalls,
+            reasoning: reasoningValue,
+            timeline: timelineEvents,
+            isThinking: false
+          }
         }
 
         const syncAssistantState = () => {
@@ -1044,6 +1088,9 @@ export function useChatOCREnhanced({
             }
           }
         }
+
+        finishThinkingBlock()
+        assistantMetadata = buildAssistantMetadata()
       }
 
       const finalAssistantMessage = assistantMessage.trim()
@@ -1062,14 +1109,35 @@ export function useChatOCREnhanced({
           // Reloading would cause the message to disappear if backend failed to save.
           // The backend should save messages, but we don't depend on it for display.
 
-          // Update conversation metadata
           try {
-            await pb.collection('conversations').update(conversationId, {
-              lastMessage: finalAssistantMessage.slice(0, 100),
-              lastMessageAt: new Date().toISOString()
+            const createdAssistantMessage = await pb.collection('messages').create({
+              conversationId,
+              userId: authUserId,
+              role: 'assistant',
+              content: finalAssistantMessage,
+              metadata: assistantMetadata
             })
-          } catch (updateError) {
-            console.error('Failed to update conversation metadata:', updateError)
+
+            setMessages(prev => prev.map(msg =>
+              msg.id === assistantTempId
+                ? {
+                    ...msg,
+                    id: createdAssistantMessage.id,
+                    createdAt: createdAssistantMessage.created ? new Date(createdAssistantMessage.created) : msg.createdAt
+                  }
+                : msg
+            ))
+
+            try {
+              await pb.collection('conversations').update(conversationId, {
+                lastMessage: finalAssistantMessage.slice(0, 100),
+                lastMessageAt: new Date().toISOString()
+              })
+            } catch (updateError) {
+              console.error('Failed to update conversation metadata:', updateError)
+            }
+          } catch (persistError) {
+            console.error('Failed to persist assistant message:', persistError)
           }
         } else {
           setMessages(prev => prev.filter(msg => msg.id !== assistantTempId))
@@ -1103,7 +1171,7 @@ export function useChatOCREnhanced({
     } finally {
       setIsLoading(false)
     }
-  }, [assistantType, chatEndpoint, conversationId, documents, input, loadMessages, logout, messages, onError, onPermissionRequired])
+  }, [assistantType, chatEndpoint, conversationId, documents, input, logout, messages, onError, onPermissionRequired])
 
   return {
     messages,
