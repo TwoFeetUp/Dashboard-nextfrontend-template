@@ -3,7 +3,6 @@
 import {
   useRef,
   useCallback,
-  useState,
   useMemo,
   useLayoutEffect,
   type DependencyList
@@ -21,7 +20,6 @@ export function useAutoScroll({
   isStreaming = false,
 }: UseAutoScrollOptions = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [isUserScrolling, setIsUserScrolling] = useState(false)
   const isUserScrollingRef = useRef(false)
   const trackedDependenciesRef = useRef<DependencyList | null>(null)
   const lastScrollTopRef = useRef(0)
@@ -53,7 +51,6 @@ export function useAutoScroll({
 
     if (isStreaming && scrolledUp) {
       if (!isUserScrollingRef.current) {
-        setIsUserScrolling(true)
         isUserScrollingRef.current = true
       }
       return
@@ -62,7 +59,6 @@ export function useAutoScroll({
     if (distanceFromBottom <= threshold) {
       // User returned near the bottom; clear the scrolling flag.
       const wasUserScrolling = isUserScrollingRef.current
-      setIsUserScrolling(false)
       isUserScrollingRef.current = false
 
       if (wasUserScrolling && !scrolledUp) {
@@ -74,13 +70,11 @@ export function useAutoScroll({
 
     // User is scrolling if they're more than threshold pixels from bottom
     if (!isUserScrollingRef.current && distanceFromBottom > threshold) {
-      setIsUserScrolling(true)
       isUserScrollingRef.current = true
     }
   }, [isStreaming, threshold])
 
   const resetUserScrolling = useCallback(() => {
-    setIsUserScrolling(false)
     isUserScrollingRef.current = false
   }, [])
 
@@ -113,7 +107,6 @@ export function useAutoScroll({
 
   return {
     containerRef,
-    isUserScrolling,
     scrollToBottom,
     handleScroll,
     resetUserScrolling
