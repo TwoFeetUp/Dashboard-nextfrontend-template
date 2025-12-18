@@ -38,8 +38,8 @@ const markdownComponents: Components = {
   },
   table: ({ children }) => (
     <div className="my-4 w-full max-w-full overflow-hidden">
-      <div className="overflow-x-auto border border-gray-200 rounded-lg max-w-full">
-        <table className="divide-y divide-gray-200">{children}</table>
+      <div className="max-w-full overflow-x-auto border border-gray-200 rounded-lg">
+        <table className="w-full table-auto divide-y divide-gray-200">{children}</table>
       </div>
     </div>
   ),
@@ -49,12 +49,12 @@ const markdownComponents: Components = {
   ),
   tr: ({ children }) => <tr className="hover:bg-gray-50">{children}</tr>,
   th: ({ children }) => (
-    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+    <th className="min-w-0 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-normal break-words align-top">
       {children}
     </th>
   ),
   td: ({ children }) => (
-    <td className="px-3 py-2 text-sm text-gray-900 whitespace-normal break-words min-w-[100px] max-w-[300px]">
+    <td className="min-w-0 px-2 py-2 text-sm text-gray-900 whitespace-normal break-words align-top">
       {children}
     </td>
   ),

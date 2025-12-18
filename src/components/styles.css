@@ -76,13 +76,16 @@
 
 .markdown-content table {
   table-layout: auto;
-  width: auto;
-  min-width: 100%;
+  width: 100%;
+  max-width: 100%;
 }
 
 .markdown-content td,
 .markdown-content th {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.5rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Force table container to respect bounds */
@@ -126,23 +129,17 @@
 /* Absolute table containment */
 .markdown-content .overflow-x-auto {
   display: block !important;
-  max-width: calc(100vw - 4rem) !important;
+  max-width: 100% !important;
   overflow-x: auto !important;
-}
-
-@media (min-width: 640px) {
-  .markdown-content .overflow-x-auto {
-    max-width: calc(100vw - 8rem) !important;
-  }
-}
-
-@media (min-width: 1024px) {
-  .markdown-content .overflow-x-auto {
-    max-width: calc(100vw - 24rem) !important;
-  }
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Prevent any element from breaking layout */
 .chat-message-content * {
   max-width: 100%;
+}
+
+.chat-scroll-container {
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }

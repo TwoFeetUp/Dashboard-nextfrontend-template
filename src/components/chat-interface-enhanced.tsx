@@ -505,11 +505,11 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
   return (
     <>
       <div className="flex h-full flex-col gap-4 lg:flex-row">
-        <div className="hidden lg:flex lg:w-72">
+        <div className="hidden lg:flex lg:w-72 flex-none">
           {renderSidebar('desktop')}
         </div>
 
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 min-w-0">
           {currentSession ? (
             <>
               <div className="p-4 border border-gray-200 rounded-t-lg bg-white border-b-0">
