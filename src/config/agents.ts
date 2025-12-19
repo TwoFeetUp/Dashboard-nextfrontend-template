@@ -86,7 +86,7 @@ export const agents: AgentConfig[] = [
   {
     id: "knowledge-hub",
     name: "Knowledge Hub",
-    description: "Zoekt in de kennisbank en geeft antwoorden met bronnen",
+    description: "Zoekt in de LHT kennisbank en geeft antwoorden met bronnen",
     icon: BookOpen,
     enabled: true,
     category: "knowledge",
