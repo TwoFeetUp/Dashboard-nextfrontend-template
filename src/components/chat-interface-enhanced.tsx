@@ -54,6 +54,11 @@ const SUGGESTION_PRESETS: Record<string, string[]> = {
     "Help me deze informatie te formatteren voor AI-consumptie.",
     "Extraheer de belangrijkste feiten uit dit document voor een kennisbank."
   ],
+  "knowledge-hub": [
+    "Kun je in de kennisbank zoeken naar onze PocketBase setup en de kernpunten samenvatten?",
+    "Welke documenten hebben we over de LHT huisstijl en waar staan ze?",
+    "Zoek richtlijnen over MCP of agents in onze documentatie."
+  ],
   "mickey-mice": [
     "Welke events staan er gepland voor deze maand?",
     "Kun je een overzicht geven van recente boekingen?",
@@ -323,6 +328,11 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
       "kenny-kennis": {
         title: `Hallo! Ik ben Kenny Kennis`,
         subtitle: "Ik transformeer ruwe informatie in AI-interpreteerbare knowledge files.",
+        icon: null
+      },
+      "knowledge-hub": {
+        title: "Hallo! Ik ben Knowledge Hub",
+        subtitle: "Ik doorzoek de kennisbank en geef antwoorden met bronnen.",
         icon: null
       }
     }

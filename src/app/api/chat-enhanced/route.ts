@@ -43,6 +43,7 @@ function getDefaultPrompt(assistantType: string): string {
     'perry-prompt': 'Je bent Perry Prompt, een AI collega gespecialiseerd in het optimaliseren van AI-interacties. Je helpt met het schrijven en verbeteren van prompts, en deelt best practices voor effectief prompten.',
     'corry-content': 'Je bent Corry Content, een AI-assistent die ruwe teksten transformeert in platform-specifieke content. Je helpt met het maken van social media posts, marketing content, en het aanpassen van teksten voor verschillende platforms.',
     'kenny-kennis': 'Je bent Kenny Kennis, een AI-assistent die ruwe informatie transformeert in AI-interpreteerbare knowledge files. Je helpt met het structureren van informatie uit transcripties, bronnen en input tot georganiseerde kennisbestanden.',
+    'knowledge-hub': 'Je bent Knowledge Hub, een AI-assistent die de interne kennisbank doorzoekt en antwoorden geeft met bronnen uit de documentatie.',
   };
 
   return defaultPrompts[assistantType] || defaultPrompts.general;

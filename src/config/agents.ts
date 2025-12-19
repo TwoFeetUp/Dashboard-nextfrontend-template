@@ -84,6 +84,15 @@ export const agents: AgentConfig[] = [
     accentColor: "#e7a4bb",
   },
   {
+    id: "knowledge-hub",
+    name: "Knowledge Hub",
+    description: "Zoekt in de kennisbank en geeft antwoorden met bronnen",
+    icon: BookOpen,
+    enabled: true,
+    category: "knowledge",
+    accentColor: "#7bb6d9",
+  },
+  {
     id: "mickey-mice",
     name: "Mickey Mice",
     description: "Readonly toegang tot MICE Operations voor events en meetings",
