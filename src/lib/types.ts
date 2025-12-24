@@ -10,7 +10,6 @@ export type MessageEvent =
   | { type: 'thinking'; content: string; isActive?: boolean }
   | { type: 'tool_call'; toolCall: ToolCall }
   | { type: 'text'; content: string }
-  | { type: 'permission_request'; permission: PendingPermission; status: 'pending' | 'approved' | 'denied' }
 
 export interface Message {
   id: string
@@ -38,11 +37,3 @@ export interface DocumentAttachment {
   error?: string
 }
 
-export interface PendingPermission {
-  permissionId: string
-  toolName: string
-  toolArgs: Record<string, unknown>
-  toolCallId?: string  // pydantic-ai's tool call ID for deferred results
-  conversationId: string
-  agent: string
-}

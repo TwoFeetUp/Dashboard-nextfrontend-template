@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import type { Message, MessageEvent, DocumentAttachment, PendingPermission, ToolCall } from '../lib/types'
+import type { Message, MessageEvent, DocumentAttachment, ToolCall } from '../lib/types'
 import pb from '@/lib/pocketbase'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -14,24 +14,20 @@ interface UseChatOCREnhancedOptions {
   chatEndpoint?: string
   ocrEndpoint?: string
   transcribeEndpoint?: string
-  permissionEndpoint?: string  // Base URL for permission API (e.g., http://localhost:8000)
   conversationId?: string | null
   assistantType?: string
   onError?: (error: Error) => void
   onFileProcessed?: (file: File, result: any) => void
-  onPermissionRequired?: (permission: PendingPermission) => void
 }
 
 export function useChatOCREnhanced({
   chatEndpoint = '/api/agent',
   ocrEndpoint = '/api/ocr',
   transcribeEndpoint = '/api/transcribe',
-  permissionEndpoint = '',  // Empty = same origin as chatEndpoint
   conversationId,
   assistantType = 'general',
   onError,
-  onFileProcessed,
-  onPermissionRequired
+  onFileProcessed
 }: UseChatOCREnhancedOptions = {}) {
   const { user, logout } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
@@ -39,83 +35,6 @@ export function useChatOCREnhanced({
   const [isLoading, setIsLoading] = useState(false)
   const [documents, setDocuments] = useState<DocumentAttachment[]>([])
   const [uploadError, setUploadError] = useState<string | null>(null)
-  const [pendingPermissions, setPendingPermissions] = useState<PendingPermission[]>([])
-
-  // Resolve permission API base URL from chat endpoint
-  const getPermissionApiUrl = useCallback((permissionId: string) => {
-    if (permissionEndpoint) {
-      return `${permissionEndpoint}/api/permission/${permissionId}`
-    }
-    // Extract base URL from chatEndpoint (e.g., http://localhost:8000/chat/stream -> http://localhost:8000)
-    try {
-      const url = new URL(chatEndpoint, window.location.origin)
-      return `${url.origin}/api/permission/${permissionId}`
-    } catch {
-      return `/api/permission/${permissionId}`
-    }
-  }, [chatEndpoint, permissionEndpoint])
-
-  // Helper to update permission status in message timeline
-  const updatePermissionInMessages = useCallback((permissionId: string, status: 'pending' | 'approved' | 'denied') => {
-    setMessages(prev => prev.map(msg => {
-      if (!msg.timeline) return msg
-      const updatedTimeline = msg.timeline.map(event => {
-        if (event.type === 'permission_request' && event.permission.permissionId === permissionId) {
-          return { ...event, status }
-        }
-        return event
-      })
-      return { ...msg, timeline: updatedTimeline }
-    }))
-  }, [])
-
-  // Approve a pending permission
-  const approvePermission = useCallback(async (permissionId: string) => {
-    try {
-      // Update UI immediately for responsiveness
-      updatePermissionInMessages(permissionId, 'approved')
-
-      const response = await fetch(getPermissionApiUrl(permissionId), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: true })
-      })
-      if (!response.ok) {
-        // Revert on error
-        updatePermissionInMessages(permissionId, 'pending')
-        throw new Error(`Failed to approve permission: ${response.statusText}`)
-      }
-      // Remove from pending list
-      setPendingPermissions(prev => prev.filter(p => p.permissionId !== permissionId))
-    } catch (error) {
-      console.error('Error approving permission:', error)
-      onError?.(error as Error)
-    }
-  }, [getPermissionApiUrl, onError, updatePermissionInMessages])
-
-  // Deny a pending permission
-  const denyPermission = useCallback(async (permissionId: string) => {
-    try {
-      // Update UI immediately for responsiveness
-      updatePermissionInMessages(permissionId, 'denied')
-
-      const response = await fetch(getPermissionApiUrl(permissionId), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: false })
-      })
-      if (!response.ok) {
-        // Revert on error
-        updatePermissionInMessages(permissionId, 'pending')
-        throw new Error(`Failed to deny permission: ${response.statusText}`)
-      }
-      // Remove from pending list
-      setPendingPermissions(prev => prev.filter(p => p.permissionId !== permissionId))
-    } catch (error) {
-      console.error('Error denying permission:', error)
-      onError?.(error as Error)
-    }
-  }, [getPermissionApiUrl, onError, updatePermissionInMessages])
 
   // Load existing messages from PocketBase when conversation changes
   const loadMessages = useCallback(async () => {
@@ -412,7 +331,6 @@ export function useChatOCREnhanced({
         let currentThinkingIndex: number | null = null
         let currentTextIndex: number | null = null
         const toolCallTimelineIndex = new Map<string, number>()
-        const permissionTimelineIndex = new Map<string, number>()
 
         const safeParseJson = (value: string) => {
           try {
@@ -734,22 +652,6 @@ export function useChatOCREnhanced({
           }
         }
 
-        const addPermissionToTimeline = (permission: PendingPermission) => {
-          currentTextIndex = null
-          permissionTimelineIndex.set(permission.permissionId, timeline.length)
-          timeline.push({ type: 'permission_request', permission, status: 'pending' })
-        }
-
-        const updatePermissionStatus = (permissionId: string, status: 'approved' | 'denied') => {
-          const existingIndex = permissionTimelineIndex.get(permissionId)
-          if (existingIndex !== undefined) {
-            const event = timeline[existingIndex]
-            if (event && event.type === 'permission_request') {
-              event.status = status
-            }
-          }
-        }
-
         const updateToolCallFromPart = (part: any, index: number) => {
           if (!part) return
           partIndexMap.set(index, { kind: part.part_kind, toolCallId: part.tool_call_id })
@@ -892,38 +794,6 @@ export function useChatOCREnhanced({
             case 'function_tool_result':
               updateToolCallResult(event.result)
               finishThinkingBlock()
-              break
-            case 'permission_required':
-              // Tool requires user permission before execution - add to timeline as inline message
-              {
-                const permission: PendingPermission = {
-                  permissionId: event.permission_id,
-                  toolName: event.tool_name,
-                  toolArgs: event.tool_args || {},
-                  toolCallId: event.tool_call_id,  // pydantic-ai's tool call ID
-                  conversationId: event.conversation_id || '',
-                  agent: event.agent || ''
-                }
-                // Add permission to timeline for inline display
-                addPermissionToTimeline(permission)
-                // Also keep in pendingPermissions for tracking (but not for overlay display)
-                setPendingPermissions(prev => [...prev, permission])
-                onPermissionRequired?.(permission)
-              }
-              break
-            case 'permission_denied':
-              // User denied permission - update timeline status
-              updatePermissionStatus(event.permission_id, 'denied')
-              setPendingPermissions(prev =>
-                prev.filter(p => p.permissionId !== event.permission_id)
-              )
-              break
-            case 'permission_timeout':
-              // Permission request timed out - update timeline status to denied
-              updatePermissionStatus(event.permission_id, 'denied')
-              setPendingPermissions(prev =>
-                prev.filter(p => p.permissionId !== event.permission_id)
-              )
               break
             default:
               break
@@ -1171,7 +1041,7 @@ export function useChatOCREnhanced({
     } finally {
       setIsLoading(false)
     }
-  }, [assistantType, chatEndpoint, conversationId, documents, input, logout, messages, onError, onPermissionRequired])
+  }, [assistantType, chatEndpoint, conversationId, documents, input, logout, messages, onError])
 
   return {
     messages,
@@ -1183,10 +1053,6 @@ export function useChatOCREnhanced({
     uploadError,
     handleFileSelect,
     handleFilesDropped,
-    removeDocument,
-    // Permission system
-    pendingPermissions,
-    approvePermission,
-    denyPermission
+    removeDocument
   }
 }

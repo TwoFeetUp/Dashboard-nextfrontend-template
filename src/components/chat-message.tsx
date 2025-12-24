@@ -4,7 +4,6 @@ import { memo, useMemo } from 'react'
 import { MarkdownRenderer } from './markdown-renderer'
 import { ToolCallDisplay } from './tool-call-display'
 import { ThinkingIndicator } from './thinking-indicator'
-import { PermissionMessage } from './permission-message'
 import type { Message, MessageEvent } from '../lib/types'
 import type { ToolCall } from '../lib/tools'
 
@@ -14,17 +13,13 @@ interface ChatMessageProps {
   isLatest?: boolean
   accentColor?: string
   textColor?: string
-  onApprovePermission?: (permissionId: string) => Promise<void>
-  onDenyPermission?: (permissionId: string) => Promise<void>
 }
 
 const ChatMessageComponent = ({
   message,
   isStreaming = false,
   accentColor = '#a1d980',
-  textColor = '#1a1a1a',
-  onApprovePermission,
-  onDenyPermission
+  textColor = '#1a1a1a'
 }: ChatMessageProps) => {
   const streamingContent = useMemo(() => {
     if (!message.content) return ''
@@ -80,16 +75,6 @@ const ChatMessageComponent = ({
                     <MarkdownRenderer content={event.content} />
                   </div>
                 )
-              } else if (event.type === 'permission_request') {
-                return (
-                  <PermissionMessage
-                    key={`permission-${event.permission.permissionId}`}
-                    permission={event.permission}
-                    status={event.status}
-                    onApprove={onApprovePermission}
-                    onDeny={onDenyPermission}
-                  />
-                )
               }
               return null
             })}
@@ -126,8 +111,6 @@ export default memo(ChatMessageComponent, (prevProps, nextProps) => {
     prevProps.isStreaming === nextProps.isStreaming &&
     prevProps.isLatest === nextProps.isLatest &&
     prevProps.accentColor === nextProps.accentColor &&
-    prevProps.textColor === nextProps.textColor &&
-    prevProps.onApprovePermission === nextProps.onApprovePermission &&
-    prevProps.onDenyPermission === nextProps.onDenyPermission
+    prevProps.textColor === nextProps.textColor
   )
 })

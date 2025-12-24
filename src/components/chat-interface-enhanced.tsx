@@ -107,10 +107,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
     uploadError,
     handleFileSelect,
     handleFilesDropped,
-    removeDocument,
-    pendingPermissions,
-    approvePermission,
-    denyPermission
+    removeDocument
   } = useChatOCREnhanced({
     conversationId,
     assistantType: toolId,
@@ -618,8 +615,6 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
                   onSuggestionClick={handleSuggestionClick}
                   accentColor={accentColor}
                   textColor={textColor}
-                  onApprovePermission={approvePermission}
-                  onDenyPermission={denyPermission}
                 />
               </div>
             </>

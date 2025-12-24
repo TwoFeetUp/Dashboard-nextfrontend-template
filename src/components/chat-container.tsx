@@ -31,8 +31,6 @@ interface ChatContainerProps {
   onSuggestionClick?: (suggestion: string) => void
   accentColor?: string
   textColor?: string
-  onApprovePermission?: (permissionId: string) => Promise<void>
-  onDenyPermission?: (permissionId: string) => Promise<void>
 }
 
 export default function ChatContainer({
@@ -56,9 +54,7 @@ export default function ChatContainer({
   suggestions = [],
   onSuggestionClick,
   accentColor = '#a1d980',
-  textColor = '#1a1a1a',
-  onApprovePermission,
-  onDenyPermission,
+  textColor = '#1a1a1a'
 }: ChatContainerProps) {
   const { 
     containerRef: messagesContainerRef, 
@@ -93,8 +89,6 @@ export default function ChatContainer({
             isLatest={index === messages.length - 1}
             accentColor={accentColor}
             textColor={textColor}
-            onApprovePermission={onApprovePermission}
-            onDenyPermission={onDenyPermission}
           />
         ))}
         {showAssistantLoader && (
@@ -106,7 +100,7 @@ export default function ChatContainer({
         )}
       </div>
     )
-  }, [messages, isLoading, accentColor, textColor, onApprovePermission, onDenyPermission])
+  }, [messages, isLoading, accentColor, textColor])
 
   return (
     <div
