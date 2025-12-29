@@ -37,3 +37,11 @@ export interface DocumentAttachment {
   error?: string
 }
 
+export interface ElicitationRequest {
+  id: string
+  message: string
+  requestedSchema?: Record<string, unknown> | null
+  conversationId?: string
+  agent?: string
+}
+

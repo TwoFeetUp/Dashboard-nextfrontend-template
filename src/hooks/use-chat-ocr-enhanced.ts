@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import type { Message, MessageEvent, DocumentAttachment, ToolCall } from '../lib/types'
+import type { Message, MessageEvent, DocumentAttachment, ToolCall, ElicitationRequest } from '../lib/types'
 import pb from '@/lib/pocketbase'
 import { useAuth } from '@/hooks/use-auth'
+
+const AGENT_API_BASE = process.env.NEXT_PUBLIC_AGENT_API_URL || 'http://localhost:8000'
 
 // Sanitize values for PocketBase filter queries to prevent injection
 const sanitizeFilterValue = (value: string): string => {
@@ -35,6 +37,49 @@ export function useChatOCREnhanced({
   const [isLoading, setIsLoading] = useState(false)
   const [documents, setDocuments] = useState<DocumentAttachment[]>([])
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [pendingElicitation, setPendingElicitation] = useState<ElicitationRequest | null>(null)
+
+  // Respond to an elicitation request
+  const respondToElicitation = useCallback(async (
+    elicitationId: string,
+    action: 'accept' | 'decline' | 'cancel',
+    content?: Record<string, unknown>
+  ) => {
+    const url = `${AGENT_API_BASE}/elicitation/respond`
+    console.log('[Elicitation] Sending response to:', url, { elicitationId, action, content })
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          elicitation_id: elicitationId,
+          action,
+          content: content || null
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: response.statusText }))
+        console.error('[Elicitation] Server error:', response.status, errorData)
+        throw new Error(errorData.detail || `Server error: ${response.status}`)
+      }
+
+      console.log('[Elicitation] Response successful')
+      // Clear pending elicitation
+      setPendingElicitation(null)
+    } catch (error) {
+      // Provide more detailed error information
+      const err = error as Error
+      console.error('[Elicitation] Failed to respond:', {
+        message: err.message,
+        name: err.name,
+        url,
+        agentApiBase: AGENT_API_BASE
+      })
+      onError?.(err)
+    }
+  }, [onError])
 
   // Load existing messages from PocketBase when conversation changes
   const loadMessages = useCallback(async () => {
@@ -795,6 +840,16 @@ export function useChatOCREnhanced({
               updateToolCallResult(event.result)
               finishThinkingBlock()
               break
+            case 'elicitation_request':
+              // MCP server is requesting user permission
+              setPendingElicitation({
+                id: event.elicitation_id,
+                message: event.message,
+                requestedSchema: event.requested_schema,
+                conversationId: event.conversation_id,
+                agent: event.agent
+              })
+              break
             default:
               break
           }
@@ -1053,6 +1108,8 @@ export function useChatOCREnhanced({
     uploadError,
     handleFileSelect,
     handleFilesDropped,
-    removeDocument
+    removeDocument,
+    pendingElicitation,
+    respondToElicitation
   }
 }

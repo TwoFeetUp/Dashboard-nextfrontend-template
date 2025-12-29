@@ -101,7 +101,6 @@ export const agents: AgentConfig[] = [
     category: "operations",
     accentColor: "#000000",
     textColor: "#ffffff",
-    comingSoon: true,
   },
 ]
 

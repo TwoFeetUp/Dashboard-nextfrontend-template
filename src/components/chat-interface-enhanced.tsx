@@ -5,6 +5,7 @@ import { Trash2, Pencil, Check, X, Menu } from "lucide-react"
 import { toast } from "sonner"
 import { useChatOCREnhanced } from "@/hooks/use-chat-ocr-enhanced"
 import ChatContainer from "./chat-container"
+import { ElicitationDialog } from "./elicitation-dialog"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/hooks/use-auth"
@@ -107,7 +108,9 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
     uploadError,
     handleFileSelect,
     handleFilesDropped,
-    removeDocument
+    removeDocument,
+    pendingElicitation,
+    respondToElicitation
   } = useChatOCREnhanced({
     conversationId,
     assistantType: toolId,
@@ -659,7 +662,15 @@ export function ChatInterfaceEnhanced({ toolName, toolId, accentColor = '#a1d980
         </div>
       </div>
 
-      {/* Permission requests are now shown inline in the chat timeline */}
+      {/* Elicitation dialog for MCP permission requests */}
+      {pendingElicitation && (
+        <ElicitationDialog
+          elicitation={pendingElicitation}
+          onRespond={respondToElicitation}
+          accentColor={accentColor}
+          textColor={textColor}
+        />
+      )}
 
       {isSidebarOpen && (
         <div className="lg:hidden">
