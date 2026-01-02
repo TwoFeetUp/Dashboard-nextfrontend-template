@@ -67,10 +67,57 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text()
       console.error('Agent backend error:', errorText)
-      return Response.json(
-        { error: 'Agent backend error', details: errorText },
-        { status: response.status }
-      )
+
+      // Handle specific status codes with structured Dutch/English messages
+      if (response.status === 401) {
+        return Response.json(
+          {
+            error_code: 'UNAUTHORIZED',
+            message_nl: 'Sessie verlopen. Log opnieuw in.',
+            message_en: 'Session expired. Please log in again.'
+          },
+          { status: 401 }
+        )
+      }
+
+      if (response.status === 429) {
+        return Response.json(
+          {
+            error_code: 'RATE_LIMIT',
+            message_nl: 'Te veel verzoeken. Wacht even en probeer opnieuw.',
+            message_en: 'Too many requests. Please wait and try again.',
+            retry_after: 60
+          },
+          { status: 429 }
+        )
+      }
+
+      if (response.status === 503 || response.status === 529) {
+        return Response.json(
+          {
+            error_code: 'SERVICE_UNAVAILABLE',
+            message_nl: 'Service tijdelijk niet beschikbaar. Probeer later opnieuw.',
+            message_en: 'Service temporarily unavailable. Please try again later.'
+          },
+          { status: 503 }
+        )
+      }
+
+      // Try to parse structured error from backend
+      try {
+        const errorData = JSON.parse(errorText)
+        return Response.json(errorData, { status: response.status })
+      } catch {
+        return Response.json(
+          {
+            error_code: 'BACKEND_ERROR',
+            message_nl: 'Er is een fout opgetreden bij de server.',
+            message_en: 'A server error occurred.',
+            details: errorText
+          },
+          { status: response.status }
+        )
+      }
     }
 
     // Stream the response back to the frontend
@@ -84,10 +131,31 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('Agent proxy error:', error)
+
+    // Check for network errors
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const isNetworkError = errorMessage.toLowerCase().includes('fetch') ||
+                          errorMessage.toLowerCase().includes('network') ||
+                          errorMessage.toLowerCase().includes('connection')
+
+    if (isNetworkError) {
+      return Response.json(
+        {
+          error_code: 'NETWORK_ERROR',
+          message_nl: 'Kan geen verbinding maken met de server.',
+          message_en: 'Cannot connect to server.',
+          details: errorMessage
+        },
+        { status: 503 }
+      )
+    }
+
     return Response.json(
       {
-        error: 'Failed to communicate with agent backend',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error_code: 'INTERNAL_ERROR',
+        message_nl: 'Er is een onverwachte fout opgetreden.',
+        message_en: 'An unexpected error occurred.',
+        details: errorMessage
       },
       { status: 500 }
     )

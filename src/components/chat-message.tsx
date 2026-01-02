@@ -23,8 +23,8 @@ const ChatMessageComponent = ({ message, isStreaming = false }: ChatMessageProps
   if (message.role === 'user') {
     return (
       <div className="flex justify-end user-message">
-        <div className="px-3 py-2 rounded-lg shadow-sm border max-w-[75%] bg-[#ff7200] text-white border-[#ffa366]">
-          <p className="text-sm leading-relaxed">{message.content}</p>
+        <div className="px-3 py-2 rounded-xl max-w-[75%] bg-gradient-to-br from-tfu-purple to-tfu-blue text-white">
+          <p className="text-sm leading-relaxed font-light">{message.content}</p>
         </div>
       </div>
     )
@@ -33,7 +33,7 @@ const ChatMessageComponent = ({ message, isStreaming = false }: ChatMessageProps
   // Assistant messages - no bubble, left-aligned, more width
   return (
     <div className="w-full max-w-full overflow-hidden px-2 sm:px-4 md:px-6 lg:px-8 message-content">
-      <div className="text-sm text-gray-800 max-w-full">
+      <div className="text-sm text-tfu-black max-w-full font-light">
         {!message.content && !message.toolCalls && !message.timeline && isStreaming ? (
           <div className="flex items-center gap-2 py-2">
             <div className="typing-indicator">

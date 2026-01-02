@@ -3,6 +3,7 @@ const path = require('path')
 
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone', // Required for Docker deployment
   outputFileTracingRoot: path.join(__dirname),
   // Enable experimental features if needed
   experimental: {

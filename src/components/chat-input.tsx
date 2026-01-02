@@ -47,7 +47,7 @@ export default function ChatInput({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={isLoading}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff7200] focus:ring-opacity-20 focus:border-[#ff7200] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 text-sm border border-tfu-grey rounded-lg focus:outline-none focus:ring-2 focus:ring-tfu-purple focus:ring-opacity-20 focus:border-tfu-purple transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-light"
           />
         </div>
         <FileUploadButton
@@ -82,7 +82,7 @@ export default function ChatInput({
           type="submit"
           disabled={isLoading || !value?.trim()}
           size="sm"
-          className="bg-[#ff7200] text-white rounded-lg hover:bg-[#e56700] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-gradient-to-br from-tfu-purple to-tfu-blue text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

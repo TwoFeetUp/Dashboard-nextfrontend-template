@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type { Message, MessageEvent, DocumentAttachment } from '../lib/types'
 import pb from '@/lib/pocketbase'
 import { useAuth } from '@/hooks/use-auth'
+
+// Stream timeout in milliseconds (2 minutes)
+const STREAM_TIMEOUT_MS = 120000
 
 interface UseChatOCREnhancedOptions {
   chatEndpoint?: string
@@ -30,6 +33,18 @@ export function useChatOCREnhanced({
   const [isLoading, setIsLoading] = useState(false)
   const [documents, setDocuments] = useState<DocumentAttachment[]>([])
   const [uploadError, setUploadError] = useState<string | null>(null)
+
+  // AbortController ref for cancelling ongoing requests
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  // Cleanup on unmount - cancel any pending requests
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
 
   // Load existing messages from PocketBase when conversation changes
   const loadMessages = useCallback(async () => {
@@ -241,16 +256,37 @@ export function useChatOCREnhanced({
         console.error('Failed to update conversation metadata:', updateError)
       }
 
-      const response = await fetch(chatEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: messagesForAPI,
-          conversationId,
-          userId: authUserId,
-          assistantType
+      // Cancel any previous request and create new AbortController
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      abortControllerRef.current = new AbortController()
+      const timeoutId = setTimeout(() => {
+        abortControllerRef.current?.abort()
+      }, STREAM_TIMEOUT_MS)
+
+      let response: Response
+      try {
+        response = await fetch(chatEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: messagesForAPI,
+            conversationId,
+            userId: authUserId,
+            assistantType
+          }),
+          signal: abortControllerRef.current.signal
         })
-      })
+      } catch (fetchError) {
+        clearTimeout(timeoutId)
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          throw new Error('TIMEOUT')
+        }
+        throw fetchError
+      } finally {
+        clearTimeout(timeoutId)
+      }
 
       if (response.status === 401) {
         await logout()
@@ -928,17 +964,22 @@ export function useChatOCREnhanced({
         setMessages(prev => prev.filter(msg => msg.id !== tempUserMessageId))
       }
 
+      // Determine error message based on error type
+      const errorMessage = error?.message === 'TIMEOUT'
+        ? 'Het verzoek duurde te lang. Probeer een korter bericht of probeer het later opnieuw.'
+        : 'Er is een fout opgetreden. Probeer het opnieuw.'
+
       if (assistantTempId) {
         setMessages(prev => prev.map(msg =>
           msg.id === assistantTempId
-            ? { ...msg, content: 'Er is een fout opgetreden. Probeer het opnieuw.' }
+            ? { ...msg, content: errorMessage }
             : msg
         ))
       } else if (error?.message !== 'UNAUTHORIZED') {
         setMessages(prev => [...prev, {
           id: `msg-${Date.now() + 1}`,
           role: 'assistant',
-          content: 'Er is een fout opgetreden. Probeer het opnieuw.'
+          content: errorMessage
         }])
       }
 

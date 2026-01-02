@@ -10,6 +10,15 @@ import { useState, useEffect } from "react"
 
 import { useAuth } from "@/hooks/use-auth"
 
+// Hook to handle hydration safely
+function useHasMounted() {
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  return hasMounted;
+}
+
 import { Button } from "@/components/ui/button"
 
 import { Input } from "@/components/ui/input"
@@ -34,9 +43,11 @@ import {
 
 } from "@/components/ui/dropdown-menu"
 
-import { FileText, Calendar, FileCheck, Megaphone, AlertCircle } from "lucide-react"
+import { FileText, Calendar, FileCheck, Megaphone, AlertCircle, Search } from "lucide-react"
 
 import { ChatInterfaceEnhanced } from "@/components/chat-interface-enhanced"
+
+import { DashboardView } from "@/components/dashboard"
 
 import { BrandLogo } from "@/components/branding/brand-logo"
 
@@ -56,6 +67,7 @@ interface UserProfile {
 }
 
 export default function HomePage() {
+  const hasMounted = useHasMounted();
 
   const { user, isLoading, isAuthenticated, error, login, logout, clearError } = useAuth()
 
@@ -158,18 +170,19 @@ export default function HomePage() {
 
 
   // Show loading state while checking authentication
+  // Also show loading before hydration is complete to prevent hydration mismatch
 
-  if (isLoading) {
+  if (!hasMounted || isLoading) {
 
     return (
 
-      <div className="min-h-screen bg-gradient-to-br from-[#fff2e5] to-[#ffe5cc] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-tfu-purple to-tfu-blue flex items-center justify-center">
 
         <div className="text-center">
 
-          <div className="w-12 h-12 border-4 border-[#ff7200] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
 
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-white/80 font-light">Laden...</p>
 
         </div>
 
@@ -191,21 +204,21 @@ export default function HomePage() {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-[#fff2e5] to-[#ffe5cc]">
+    <div className="min-h-screen bg-gradient-to-br from-tfu-purple to-tfu-blue">
 
       {/* Header */}
 
-      <header className="bg-white border-b border-[#ffd1b0]">
+      <header className="bg-white/10 backdrop-blur-md border-b border-white/20">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="flex justify-between items-center h-16">
 
-            <BrandLogo />
+            <BrandLogo variant="dark" />
 
             <div className="flex space-x-2">
 
-              <Button variant="outline" className="border-[#ffa366] text-[#ff7200] hover:bg-[#fff2e5] bg-transparent">
+              <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 bg-transparent">
 
                 Registreren
 
@@ -233,7 +246,7 @@ export default function HomePage() {
               <BrandLogo className="justify-center" />
             </div>
 
-            <CardDescription className="text-gray-600">Log in met je werk e-mailadres</CardDescription>
+            <CardDescription className="text-tfu-black/70 font-light">Log in met je werk e-mailadres</CardDescription>
 
           </CardHeader>
 
@@ -325,7 +338,7 @@ export default function HomePage() {
 
               <div className="text-right">
 
-                <Button variant="link" className="text-[#ff7200] hover:text-[#e56700] p-0 h-auto">
+                <Button variant="link" className="text-tfu-purple hover:text-tfu-violet p-0 h-auto font-normal">
 
                   Wachtwoord vergeten?
 
@@ -333,11 +346,11 @@ export default function HomePage() {
 
               </div>
 
-              <Button 
+              <Button
 
-                type="submit" 
+                type="submit"
 
-                className="w-full bg-[#ff7200] hover:bg-[#e56700] text-white"
+                className="w-full bg-gradient-to-br from-tfu-purple to-tfu-blue hover:opacity-90 text-white font-bold shadow-tfu-md"
 
                 disabled={isSubmitting || !email || !password}
 
@@ -363,11 +376,11 @@ export default function HomePage() {
 
             </form>
 
-            <div className="mt-6 text-center text-sm text-gray-600">
+            <div className="mt-6 text-center text-sm text-tfu-black/70 font-light">
 
               Nog geen account?{" "}
 
-              <Button variant="link" className="text-[#ff7200] hover:text-[#e56700] p-0 h-auto">
+              <Button variant="link" className="text-tfu-purple hover:text-tfu-violet p-0 h-auto font-normal">
 
                 Registreren
 
@@ -453,6 +466,7 @@ function Dashboard({
           'event-contract-assistant': FileCheck,
           'marketing-communicatie': Megaphone,
           'test-model': AlertCircle,
+          'research-dashboard': Search,
         }
 
         const toTitle = (value: string) =>
@@ -472,6 +486,18 @@ function Dashboard({
           model: agent?.model
         }))
 
+        // Add Research Dashboard as a special tool card
+        const researchDashboard: ToolCard = {
+          id: 'research-dashboard',
+          name: 'Research Dashboard',
+          description: 'AI-gestuurde onderzoekskaarten die automatisch worden bijgewerkt',
+          icon: Search,
+          available: true,
+          error: null,
+          model: 'Claude Sonnet'
+        }
+
+        toolCards.push(researchDashboard)
         toolCards.sort((a, b) => a.name.localeCompare(b.name))
 
         if (!cancelled) {
@@ -520,11 +546,11 @@ function Dashboard({
 
     return (
 
-      <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <div className="h-screen bg-tfu-grey flex flex-col overflow-hidden">
 
         {/* Header */}
 
-        <header className="bg-white border-b border-gray-200 flex-shrink-0">
+        <header className="bg-white border-b border-tfu-grey flex-shrink-0 shadow-tfu-sm">
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -538,7 +564,7 @@ function Dashboard({
 
                   onClick={() => setSelectedTool(null)}
 
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-tfu-purple hover:text-tfu-violet hover:bg-tfu-grey"
 
                 >
 
@@ -546,7 +572,7 @@ function Dashboard({
 
                 </Button>
 
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-bold text-tfu-black">
 
                   {tools.find((t) => t.id === selectedTool)?.name}
 
@@ -560,9 +586,9 @@ function Dashboard({
 
                   <DropdownMenuTrigger asChild>
 
-                    <Button variant="ghost" className="flex items-center space-x-2 hover:bg-gray-100">
+                    <Button variant="ghost" className="flex items-center space-x-2 hover:bg-tfu-grey">
 
-                      <div className="w-8 h-8 bg-[#ff7200] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                      <div className="w-8 h-8 bg-gradient-to-br from-tfu-purple to-tfu-blue rounded-full flex items-center justify-center text-white text-sm font-bold">
 
                         {userProfile.name.charAt(0)}
 
@@ -570,9 +596,9 @@ function Dashboard({
 
                       <div className="text-left">
 
-                        <div className="text-sm font-medium text-gray-900">{userProfile.name}</div>
+                        <div className="text-sm font-bold text-tfu-black">{userProfile.name}</div>
 
-                        <div className="text-xs text-gray-500">{userProfile.role}</div>
+                        <div className="text-xs text-tfu-black/60 font-light">{userProfile.role}</div>
 
                       </div>
 
@@ -586,9 +612,9 @@ function Dashboard({
 
                       <div className="flex flex-col space-y-1">
 
-                        <p className="text-sm font-medium leading-none">{userProfile.name}</p>
+                        <p className="text-sm font-bold leading-none text-tfu-black">{userProfile.name}</p>
 
-                        <p className="text-xs leading-none text-muted-foreground">{userProfile.email}</p>
+                        <p className="text-xs leading-none text-tfu-black/60 font-light">{userProfile.email}</p>
 
                       </div>
 
@@ -596,13 +622,13 @@ function Dashboard({
 
                     <DropdownMenuSeparator />
 
-                    <DropdownMenuItem onClick={() => setSelectedTool(null)}>Dashboard</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSelectedTool(null)} className="hover:bg-tfu-grey">Dashboard</DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => setShowProfile(true)}>Profiel</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowProfile(true)} className="hover:bg-tfu-grey">Profiel</DropdownMenuItem>
 
                     <DropdownMenuSeparator />
 
-                    <DropdownMenuItem onClick={onLogout}>Uitloggen</DropdownMenuItem>
+                    <DropdownMenuItem onClick={onLogout} className="hover:bg-tfu-grey">Uitloggen</DropdownMenuItem>
 
                   </DropdownMenuContent>
 
@@ -624,6 +650,12 @@ function Dashboard({
           {(() => {
             const selected = tools.find((tool) => tool.id === selectedTool)
             if (!selected) return null
+
+            // Render Research Dashboard view
+            if (selected.id === 'research-dashboard') {
+              return <DashboardView userId={userProfile.email} />
+            }
+
             return (
               <ChatInterfaceEnhanced toolName={selected.name} toolId={selected.id} />
             )
@@ -641,11 +673,11 @@ function Dashboard({
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-[#fff2e5] to-[#ffe5cc]">
+    <div className="min-h-screen bg-tfu-grey">
 
       {/* Header */}
 
-      <header className="bg-white border-b border-[#ffd1b0]">
+      <header className="bg-white border-b border-tfu-grey shadow-tfu-sm">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -659,9 +691,9 @@ function Dashboard({
 
                 <DropdownMenuTrigger asChild>
 
-                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-[#fff2e5]">
+                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-tfu-grey">
 
-                    <div className="w-8 h-8 bg-[#ff7200] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    <div className="w-8 h-8 bg-gradient-to-br from-tfu-purple to-tfu-blue rounded-full flex items-center justify-center text-white text-sm font-bold">
 
                       {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
 
@@ -669,9 +701,9 @@ function Dashboard({
 
                     <div className="text-left">
 
-                      <div className="text-sm font-medium text-gray-900">{userProfile.name}</div>
+                      <div className="text-sm font-bold text-tfu-black">{userProfile.name}</div>
 
-                      <div className="text-xs text-gray-500">{userProfile.role}</div>
+                      <div className="text-xs text-tfu-black/60 font-light">{userProfile.role}</div>
 
                     </div>
 
@@ -685,9 +717,9 @@ function Dashboard({
 
                     <div className="flex flex-col space-y-1">
 
-                      <p className="text-sm font-medium leading-none">{userProfile.name}</p>
+                      <p className="text-sm font-bold leading-none text-tfu-black">{userProfile.name}</p>
 
-                      <p className="text-xs leading-none text-muted-foreground">{userProfile.email}</p>
+                      <p className="text-xs leading-none text-tfu-black/60 font-light">{userProfile.email}</p>
 
                     </div>
 
@@ -695,13 +727,13 @@ function Dashboard({
 
                   <DropdownMenuSeparator />
 
-                  <DropdownMenuItem>Dashboard</DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-tfu-grey">Dashboard</DropdownMenuItem>
 
-                  <DropdownMenuItem onClick={() => setShowProfile(true)}>Profiel</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowProfile(true)} className="hover:bg-tfu-grey">Profiel</DropdownMenuItem>
 
                   <DropdownMenuSeparator />
 
-                  <DropdownMenuItem onClick={onLogout}>Uitloggen</DropdownMenuItem>
+                  <DropdownMenuItem onClick={onLogout} className="hover:bg-tfu-grey">Uitloggen</DropdownMenuItem>
 
                 </DropdownMenuContent>
 
@@ -723,7 +755,7 @@ function Dashboard({
 
         <div className="mb-8">
 
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h2>
+          <h2 className="text-3xl font-normal text-tfu-black mb-2">Dashboard</h2>
 
         </div>
 
@@ -731,9 +763,9 @@ function Dashboard({
 
         <div className="text-center mb-8">
 
-          <h3 className="text-2xl font-semibold text-gray-900 mb-2">Kies je tool</h3>
+          <h3 className="text-2xl font-normal text-tfu-black mb-2">Kies je tool</h3>
 
-          <p className="text-gray-600">Selecteer de AI-assistent die je wilt gebruiken</p>
+          <p className="text-tfu-black/70 font-light">Selecteer de AI-assistent die je wilt gebruiken</p>
 
         </div>
 
@@ -759,9 +791,9 @@ function Dashboard({
 
                 key={tool.id}
 
-                className={`transition-all duration-200 border-[#ffd1b0] bg-white ${
+                className={`transition-all duration-200 border-tfu-grey bg-white shadow-tfu-md ${
                   tool.available
-                    ? 'cursor-pointer hover:shadow-lg hover:scale-105 hover:border-[#ffa366]'
+                    ? 'cursor-pointer hover:shadow-tfu-lg hover:scale-[1.02] hover:border-tfu-purple/30'
                     : 'opacity-60 cursor-not-allowed'
                 }`}
 
@@ -771,19 +803,19 @@ function Dashboard({
 
                 <CardHeader className="text-center">
 
-                  <div className="w-16 h-16 bg-[#ffe3d1] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-tfu-purple/10 to-tfu-blue/20 rounded-full flex items-center justify-center mx-auto mb-4">
 
-                    <IconComponent className="w-8 h-8 text-[#ff7200]" />
+                    <IconComponent className="w-8 h-8 text-tfu-purple" />
 
                   </div>
 
-                  <CardTitle className="text-lg font-semibold text-gray-900">{tool.name}</CardTitle>
+                  <CardTitle className="text-lg font-bold text-tfu-black">{tool.name}</CardTitle>
 
-                  <CardDescription className="text-sm text-gray-600">{tool.description}</CardDescription>
+                  <CardDescription className="text-sm text-tfu-black/70 font-light">{tool.description}</CardDescription>
 
                   {!tool.available && tool.error && (
-                    <CardDescription className="text-xs text-red-600 mt-2">
-                      Unavailable: {tool.error}
+                    <CardDescription className="text-xs text-red-600 mt-2 font-light">
+                      Niet beschikbaar: {tool.error}
                     </CardDescription>
                   )}
 
@@ -885,11 +917,11 @@ function ProfileManagement({
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-[#fff2e5] to-[#ffe5cc]">
+    <div className="min-h-screen bg-tfu-grey">
 
       {/* Header */}
 
-      <header className="bg-white border-b border-[#ffd1b0]">
+      <header className="bg-white border-b border-tfu-grey shadow-tfu-sm">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -897,13 +929,13 @@ function ProfileManagement({
 
             <div className="flex items-center space-x-4">
 
-              <Button variant="ghost" onClick={onBack} className="text-gray-600 hover:text-gray-900">
+              <Button variant="ghost" onClick={onBack} className="text-tfu-purple hover:text-tfu-violet hover:bg-tfu-grey">
 
-                ← Terug naar Dashboard
+                ← Terug naar dashboard
 
               </Button>
 
-              <h1 className="text-xl font-semibold text-gray-900">Profiel</h1>
+              <h1 className="text-xl font-bold text-tfu-black">Profiel</h1>
 
             </div>
 
@@ -911,7 +943,7 @@ function ProfileManagement({
 
               <div className="flex items-center space-x-2">
 
-                <div className="w-8 h-8 bg-[#ff7200] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                <div className="w-8 h-8 bg-gradient-to-br from-tfu-purple to-tfu-blue rounded-full flex items-center justify-center text-white text-sm font-bold">
 
                   {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
 
@@ -919,9 +951,9 @@ function ProfileManagement({
 
                 <div className="text-left">
 
-                  <div className="text-sm font-medium text-gray-900">{userProfile.name}</div>
+                  <div className="text-sm font-bold text-tfu-black">{userProfile.name}</div>
 
-                  <div className="text-xs text-gray-500">{userProfile.role}</div>
+                  <div className="text-xs text-tfu-black/60 font-light">{userProfile.role}</div>
 
                 </div>
 
@@ -933,7 +965,7 @@ function ProfileManagement({
 
                 onClick={onLogout}
 
-                className="border-[#ffa366] text-[#ff7200] hover:bg-[#fff2e5] bg-transparent"
+                className="border-tfu-purple text-tfu-purple hover:bg-tfu-purple hover:text-white bg-transparent"
 
               >
 
@@ -1005,9 +1037,9 @@ function ProfileManagement({
 
               </div>
 
-              <Button onClick={handleSaveProfile} className="w-full bg-[#ff7200] hover:bg-[#e56700]">
+              <Button onClick={handleSaveProfile} className="w-full bg-gradient-to-br from-tfu-purple to-tfu-blue hover:opacity-90 text-white font-bold">
 
-                Profiel Opslaan
+                Profiel opslaan
 
               </Button>
 
@@ -1039,11 +1071,11 @@ function ProfileManagement({
 
                   variant="outline"
 
-                  className="w-full border-[#ffa366] text-[#ff7200] hover:bg-[#fff2e5]"
+                  className="w-full border-tfu-purple text-tfu-purple hover:bg-tfu-purple hover:text-white"
 
                 >
 
-                  Wachtwoord Wijzigen
+                  Wachtwoord wijzigen
 
                 </Button>
 
@@ -1053,7 +1085,7 @@ function ProfileManagement({
 
                   <div className="space-y-2">
 
-                    <Label htmlFor="current-password">Huidig Wachtwoord</Label>
+                    <Label htmlFor="current-password">Huidig wachtwoord</Label>
 
                     <Input
 
@@ -1071,7 +1103,7 @@ function ProfileManagement({
 
                   <div className="space-y-2">
 
-                    <Label htmlFor="new-password">Nieuw Wachtwoord</Label>
+                    <Label htmlFor="new-password">Nieuw wachtwoord</Label>
 
                     <Input
 
@@ -1089,7 +1121,7 @@ function ProfileManagement({
 
                   <div className="space-y-2">
 
-                    <Label htmlFor="confirm-password">Bevestig Nieuw Wachtwoord</Label>
+                    <Label htmlFor="confirm-password">Bevestig nieuw wachtwoord</Label>
 
                     <Input
 
@@ -1107,13 +1139,13 @@ function ProfileManagement({
 
                   <div className="flex space-x-2">
 
-                    <Button onClick={handlePasswordChange} className="flex-1 bg-[#ff7200] hover:bg-[#e56700]">
+                    <Button onClick={handlePasswordChange} className="flex-1 bg-gradient-to-br from-tfu-purple to-tfu-blue hover:opacity-90 text-white font-bold">
 
-                      Wachtwoord Wijzigen
+                      Wachtwoord wijzigen
 
                     </Button>
 
-                    <Button onClick={() => setShowPasswordChange(false)} variant="outline" className="flex-1">
+                    <Button onClick={() => setShowPasswordChange(false)} variant="outline" className="flex-1 border-tfu-grey hover:bg-tfu-grey">
 
                       Annuleren
 

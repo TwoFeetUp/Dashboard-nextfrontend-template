@@ -1,4 +1,5 @@
 import pb from '@/lib/pocketbase';
+import { withRetry, isNetworkError } from '@/lib/retry';
 import type { User } from '@/types/auth';
 
 // Conversation types
@@ -45,21 +46,32 @@ export interface CreateMessageData {
 // Get all conversations for a user
 export async function getUserConversations(userId: string): Promise<Conversation[]> {
   try {
-    const records = await pb.collection('conversations').getFullList({
-      filter: `userId = "${userId}"`,
-      sort: '-lastMessageAt',
-    });
-    
-    return records.map(record => ({
-      id: record.id,
-      userId: record.userId,
-      title: record.title,
-      lastMessage: record.lastMessage,
-      lastMessageAt: record.lastMessageAt,
-      metadata: record.metadata,
-      created: record.created,
-      updated: record.updated,
-    }));
+    return await withRetry(
+      async () => {
+        const records = await pb.collection('conversations').getFullList({
+          filter: `userId = "${userId}"`,
+          sort: '-lastMessageAt',
+        });
+
+        return records.map(record => ({
+          id: record.id,
+          userId: record.userId,
+          title: record.title,
+          lastMessage: record.lastMessage,
+          lastMessageAt: record.lastMessageAt,
+          metadata: record.metadata,
+          created: record.created,
+          updated: record.updated,
+        }));
+      },
+      {
+        maxAttempts: 3,
+        isRetryable: isNetworkError,
+        onRetry: (attempt, error) => {
+          console.warn(`Retry ${attempt} for getUserConversations:`, error.message);
+        }
+      }
+    );
   } catch (error) {
     console.error('Failed to fetch conversations:', error);
     return [];
@@ -69,17 +81,28 @@ export async function getUserConversations(userId: string): Promise<Conversation
 // Get a single conversation
 export async function getConversation(conversationId: string): Promise<Conversation | null> {
   try {
-    const record = await pb.collection('conversations').getOne(conversationId);
-    return {
-      id: record.id,
-      userId: record.userId,
-      title: record.title,
-      lastMessage: record.lastMessage,
-      lastMessageAt: record.lastMessageAt,
-      metadata: record.metadata,
-      created: record.created,
-      updated: record.updated,
-    };
+    return await withRetry(
+      async () => {
+        const record = await pb.collection('conversations').getOne(conversationId);
+        return {
+          id: record.id,
+          userId: record.userId,
+          title: record.title,
+          lastMessage: record.lastMessage,
+          lastMessageAt: record.lastMessageAt,
+          metadata: record.metadata,
+          created: record.created,
+          updated: record.updated,
+        };
+      },
+      {
+        maxAttempts: 3,
+        isRetryable: isNetworkError,
+        onRetry: (attempt, error) => {
+          console.warn(`Retry ${attempt} for getConversation:`, error.message);
+        }
+      }
+    );
   } catch (error) {
     console.error('Failed to fetch conversation:', error);
     return null;
@@ -132,21 +155,32 @@ export async function deleteConversation(conversationId: string): Promise<boolea
 // Get messages for a conversation
 export async function getConversationMessages(conversationId: string): Promise<Message[]> {
   try {
-    const records = await pb.collection('messages').getFullList({
-      filter: `conversationId = "${conversationId}"`,
-      // Remove sort since messages collection doesn't have created field
-    });
-    
-    return records.map(record => ({
-      id: record.id,
-      conversationId: record.conversationId,
-      userId: record.userId,
-      role: record.role,
-      content: record.content,
-      metadata: record.metadata,
-      created: record.created,
-      updated: record.updated,
-    }));
+    return await withRetry(
+      async () => {
+        const records = await pb.collection('messages').getFullList({
+          filter: `conversationId = "${conversationId}"`,
+          // Remove sort since messages collection doesn't have created field
+        });
+
+        return records.map(record => ({
+          id: record.id,
+          conversationId: record.conversationId,
+          userId: record.userId,
+          role: record.role,
+          content: record.content,
+          metadata: record.metadata,
+          created: record.created,
+          updated: record.updated,
+        }));
+      },
+      {
+        maxAttempts: 3,
+        isRetryable: isNetworkError,
+        onRetry: (attempt, error) => {
+          console.warn(`Retry ${attempt} for getConversationMessages:`, error.message);
+        }
+      }
+    );
   } catch (error) {
     console.error('Failed to fetch messages:', error);
     return [];
