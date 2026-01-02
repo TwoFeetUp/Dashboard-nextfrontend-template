@@ -17,6 +17,9 @@ interface ElicitationDialogProps {
   textColor?: string
 }
 
+// Amber/brown color for DELETE confirmation
+const DELETE_CONFIRM_COLOR = '#946e51'
+
 export function ElicitationDialog({
   elicitation,
   onRespond,
@@ -25,6 +28,11 @@ export function ElicitationDialog({
 }: ElicitationDialogProps) {
   const [isResponding, setIsResponding] = useState(false)
   const [formData, setFormData] = useState<Record<string, string>>({})
+  const [confirmationStep, setConfirmationStep] = useState<1 | 2>(1)
+
+  // Detect DELETE operations via message text
+  const isDeleteOperation = elicitation.message.toLowerCase().includes('verwijder') ||
+                            elicitation.message.toLowerCase().includes('delete')
 
   // Check if schema requires input fields
   const hasSchema = elicitation.requestedSchema &&
@@ -36,6 +44,12 @@ export function ElicitationDialog({
     : null
 
   const handleResponse = async (action: 'accept' | 'decline' | 'cancel') => {
+    // For DELETE operations on step 1, go to confirmation step instead of submitting
+    if (isDeleteOperation && action === 'accept' && confirmationStep === 1) {
+      setConfirmationStep(2)
+      return
+    }
+
     setIsResponding(true)
     try {
       const content = action === 'accept' && schemaProperties
@@ -47,6 +61,65 @@ export function ElicitationDialog({
     }
   }
 
+  const handleBack = () => {
+    setConfirmationStep(1)
+  }
+
+  // Step 2: DELETE confirmation UI
+  if (isDeleteOperation && confirmationStep === 2) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
+          {/* Header - amber tinted */}
+          <div
+            className="rounded-t-lg px-6 py-4"
+            style={{ backgroundColor: `${DELETE_CONFIRM_COLOR}22` }}
+          >
+            <h3 className="text-lg font-semibold text-lht-black">
+              Weet je het zeker?
+            </h3>
+            <p className="text-sm text-lht-black/60">
+              Deze actie kan niet ongedaan worden gemaakt
+            </p>
+          </div>
+
+          {/* Content */}
+          <div className="px-6 py-4">
+            <div className="whitespace-pre-wrap text-sm text-lht-black">
+              {elicitation.message}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-2 border-t border-lht-black/10 px-6 py-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBack}
+              disabled={isResponding}
+            >
+              Terug
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleResponse('accept')}
+              disabled={isResponding}
+              style={{
+                backgroundColor: DELETE_CONFIRM_COLOR,
+                borderColor: DELETE_CONFIRM_COLOR,
+                color: '#ffffff'
+              }}
+              className="border transition-all duration-200 hover:shadow-md hover:opacity-80"
+            >
+              {isResponding ? 'Bezig...' : 'Definitief verwijderen'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 1: Standard permission UI
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
