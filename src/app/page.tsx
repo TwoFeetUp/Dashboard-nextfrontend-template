@@ -542,11 +542,14 @@ function Dashboard({
 
 
 
+  // Research Dashboard needs natural page scrolling, chat needs fixed height
+  const isResearchDashboard = selectedTool === 'research-dashboard'
+
   if (selectedTool) {
 
     return (
 
-      <div className="h-screen bg-tfu-grey flex flex-col overflow-hidden">
+      <div className={`bg-tfu-grey flex flex-col ${isResearchDashboard ? 'min-h-screen' : 'h-screen overflow-hidden'}`}>
 
         {/* Header */}
 
@@ -646,7 +649,7 @@ function Dashboard({
 
         {/* Tool Content */}
 
-        <main className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8 py-6 flex-1 min-h-0 overflow-hidden">
+        <main className={`mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8 py-6 ${isResearchDashboard ? '' : 'flex-1 min-h-0 overflow-hidden'}`}>
           {(() => {
             const selected = tools.find((tool) => tool.id === selectedTool)
             if (!selected) return null

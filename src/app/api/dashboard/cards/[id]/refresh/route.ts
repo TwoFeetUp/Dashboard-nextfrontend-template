@@ -8,6 +8,7 @@ export async function POST(
 ) {
   const { id } = await params
   const userId = request.nextUrl.searchParams.get('userId')
+  const mode = request.nextUrl.searchParams.get('mode') || 'full'
 
   if (!userId) {
     return NextResponse.json({ error: 'userId is required' }, { status: 400 })
@@ -15,7 +16,7 @@ export async function POST(
 
   try {
     const response = await fetch(
-      `${BACKEND_URL}/dashboard/cards/${id}/refresh?user_id=${userId}`,
+      `${BACKEND_URL}/dashboard/cards/${id}/refresh?user_id=${userId}&mode=${mode}`,
       {
         method: 'POST',
         headers: {

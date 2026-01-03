@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { DashboardCard } from './DashboardCard'
+import { DashboardCard, type RefreshMode } from './DashboardCard'
 import { CardConfigModal } from './CardConfigModal'
 import { AddCardButton } from './AddCardButton'
 import { Search } from 'lucide-react'
@@ -88,8 +88,8 @@ export function DashboardView({ userId }: DashboardViewProps) {
     await loadCards()
   }
 
-  const handleRefreshCard = async (cardId: string) => {
-    const response = await fetch(`/api/dashboard/cards/${cardId}/refresh?userId=${userId}`, {
+  const handleRefreshCard = async (cardId: string, mode: RefreshMode = 'full') => {
+    const response = await fetch(`/api/dashboard/cards/${cardId}/refresh?userId=${userId}&mode=${mode}`, {
       method: 'POST',
     })
 
@@ -160,7 +160,7 @@ export function DashboardView({ userId }: DashboardViewProps) {
                 setIsConfigModalOpen(true)
               }}
               onDelete={() => handleDeleteCard(card.id)}
-              onRefresh={() => handleRefreshCard(card.id)}
+              onRefresh={(mode) => handleRefreshCard(card.id, mode)}
             />
           ))}
         </div>

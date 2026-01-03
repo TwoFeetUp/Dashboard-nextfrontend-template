@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MoreVertical, RefreshCw, Pencil, Trash2, Clock, AlertCircle } from 'lucide-react'
+import { MoreVertical, RefreshCw, Pencil, Trash2, Clock, AlertCircle, Database, Search } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,12 +14,14 @@ import { CardContent as CardContentRenderer } from './CardContent'
 import { CardLoadingState } from './CardLoadingState'
 import type { DashboardCard as DashboardCardType, CardContent as CardContentType } from '@/lib/dashboard-types'
 
+export type RefreshMode = 'data' | 'full'
+
 interface DashboardCardProps {
   card: DashboardCardType
   userId: string
   onEdit: () => void
   onDelete: () => void
-  onRefresh: () => Promise<void>
+  onRefresh: (mode: RefreshMode) => Promise<void>
 }
 
 export function DashboardCard({ card, userId, onEdit, onDelete, onRefresh }: DashboardCardProps) {
@@ -52,10 +54,10 @@ export function DashboardCard({ card, userId, onEdit, onDelete, onRefresh }: Das
     fetchContent()
   }, [fetchContent])
 
-  const handleRefresh = async () => {
+  const handleRefresh = async (mode: RefreshMode = 'full') => {
     setIsRefreshing(true)
     try {
-      await onRefresh()
+      await onRefresh(mode)
       // Re-fetch content after refresh
       await fetchContent()
     } finally {
@@ -78,9 +80,13 @@ export function DashboardCard({ card, userId, onEdit, onDelete, onRefresh }: Das
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleRefresh} disabled={isRefreshing}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Verversen
+            <DropdownMenuItem onClick={() => handleRefresh('data')} disabled={isRefreshing}>
+              <Database className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-pulse' : ''}`} />
+              Data bijwerken
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleRefresh('full')} disabled={isRefreshing}>
+              <Search className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Opnieuw onderzoeken
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
@@ -101,7 +107,7 @@ export function DashboardCard({ card, userId, onEdit, onDelete, onRefresh }: Das
           <div className="flex flex-col items-center justify-center h-[200px] text-center p-4">
             <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
             <p className="text-sm text-red-600 mb-4">{content.errorMessage}</p>
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <Button variant="outline" size="sm" onClick={() => handleRefresh('full')}>
               Opnieuw proberen
             </Button>
           </div>
@@ -110,7 +116,7 @@ export function DashboardCard({ card, userId, onEdit, onDelete, onRefresh }: Das
         ) : (
           <div className="flex flex-col items-center justify-center h-[200px] text-center p-4">
             <p className="text-sm text-tfu-black/60 mb-4">Geen data beschikbaar</p>
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <Button variant="outline" size="sm" onClick={() => handleRefresh('full')}>
               Onderzoek starten
             </Button>
           </div>
