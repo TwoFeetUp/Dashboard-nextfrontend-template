@@ -13,6 +13,50 @@ A production-ready Next.js template for building AI assistant applications with 
 - **Responsive Design** - Mobile-friendly chat interface with shadcn/ui components
 - **Type-Safe** - Full TypeScript support throughout
 
+---
+
+## ⚠️ Scrollbar Consistency (IMPORTANT)
+
+This application uses **ONE scrollbar only** - the browser's native scrollbar. This prevents the "double scrollbar bug" where a white component scrollbar appears next to the browser scrollbar.
+
+### The Problem
+Radix UI components (dropdown menus, dialogs, select boxes) create their own scrollbars when content overflows. Combined with the page-level scrollbar, this creates a confusing dual-scrollbar UI.
+
+### The Solution
+Global CSS rules in `src/app/globals.css` hide all component-level scrollbars while preserving scroll functionality:
+
+```css
+/* Radix UI components - hide internal scrollbars */
+[data-radix-dropdown-menu-content],
+[data-radix-select-content],
+[data-radix-dialog-content] {
+  scrollbar-width: none;           /* Firefox */
+  -ms-overflow-style: none;        /* IE/Edge */
+}
+[data-radix-dropdown-menu-content]::-webkit-scrollbar,
+[data-radix-select-content]::-webkit-scrollbar,
+[data-radix-dialog-content]::-webkit-scrollbar {
+  display: none;                   /* Chrome/Safari */
+}
+```
+
+### Rules for New Components
+When adding new UI components:
+
+1. **DO NOT** use `overflow-auto` or `overflow-y-scroll` on modals, dropdowns, or popovers
+2. **DO** let content scroll naturally with the browser scrollbar
+3. **DO** add new Radix selectors to `globals.css` if using new Radix primitives
+4. **DO** use the `scrollbar-hide` utility class for custom scrollable containers that should be invisible
+
+### Testing Scrollbars
+Always test these scenarios for scrollbar bugs:
+- [ ] Click three-dot menu on dashboard cards
+- [ ] Open select dropdowns with many options
+- [ ] Open dialogs/modals with long content
+- [ ] Expand methodology sections in cards
+
+---
+
 ## Quick Start
 
 ### Prerequisites

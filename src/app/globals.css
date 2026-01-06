@@ -31,8 +31,16 @@
   --tfu-shadow-xl: 0 12px 24px rgba(5, 0, 52, 0.16);
 }
 
-/* ===== Scrollbar Stability (VERPLICHT) ===== */
-/* Voorkom layout shift bij dropdowns/modals - altijd scrollbar zichtbaar */
+/* ===== Scrollbar Consistency (VERPLICHT) ===== */
+/*
+ * SCROLLBAR PRINCIPE: Gebruik ALLEEN de browser native scrollbar.
+ * Alle component-level scrollbars worden verborgen om dubbele scrollbars te voorkomen.
+ *
+ * Dit voorkomt de "white scrollbar next to browser scrollbar" bug.
+ * Zie: https://github.com/twofeetup/Dashboard-template#scrollbar-consistency
+ */
+
+/* Forceer browser scrollbar op page level - voorkomt layout shift */
 html {
   overflow-y: scroll;
 }
@@ -54,6 +62,48 @@ body[data-scroll-locked] {
 /* Verwijder Radix pointer-events lock op html */
 html[style*="pointer-events"] {
   pointer-events: auto !important;
+}
+
+/* ===== Component Scrollbar Hiding ===== */
+/* Verberg scrollbars in Radix UI componenten - behoud scroll functionaliteit */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Opera */
+}
+
+/* Radix UI Dropdown Menu - verberg interne scrollbar */
+[data-radix-popper-content-wrapper] [data-radix-dropdown-menu-content],
+[data-radix-popper-content-wrapper] [data-radix-select-content],
+[data-radix-popper-content-wrapper] [data-radix-context-menu-content] {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+[data-radix-popper-content-wrapper] [data-radix-dropdown-menu-content]::-webkit-scrollbar,
+[data-radix-popper-content-wrapper] [data-radix-select-content]::-webkit-scrollbar,
+[data-radix-popper-content-wrapper] [data-radix-context-menu-content]::-webkit-scrollbar {
+  display: none;
+}
+
+/* Radix UI Dialog/Modal - verberg interne scrollbar, gebruik page scroll */
+[data-radix-dialog-content] {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+[data-radix-dialog-content]::-webkit-scrollbar {
+  display: none;
+}
+
+/* Radix UI ScrollArea - verberg de custom scrollbar thumb, gebruik native scroll */
+/* Dit voorkomt dubbele scrollbars wanneer ScrollArea binnen een scrollbare container staat */
+[data-radix-scroll-area-viewport] {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  display: none;
 }
 
 /* ===== shadcn/ui CSS Variables with TwoFeetUp Colors ===== */
