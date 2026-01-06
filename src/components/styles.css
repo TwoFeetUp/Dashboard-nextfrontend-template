@@ -140,7 +140,6 @@
 }
 
 .chat-scroll-container {
-  scrollbar-gutter: stable;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
 }

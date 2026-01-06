@@ -36,6 +36,20 @@ export async function GET(
       isRefreshing: data.is_refreshing,
       generatedAt: data.generated_at,
       errorMessage: data.error_message,
+      summary: data.summary,
+      keyInsight: data.key_insight,
+      methodology: data.methodology ? {
+        toolsUsed: data.methodology.tools_used?.map((t: { tool_name: string; domain: string; results_count: number; success: boolean; error_message?: string }) => ({
+          toolName: t.tool_name,
+          domain: t.domain,
+          resultsCount: t.results_count,
+          success: t.success,
+          errorMessage: t.error_message,
+        })),
+        totalSourcesChecked: data.methodology.total_sources_checked,
+        analysisSteps: data.methodology.analysis_steps,
+        timeTakenSeconds: data.methodology.time_taken_seconds,
+      } : undefined,
     })
   } catch (error) {
     console.error('Failed to fetch card content:', error)

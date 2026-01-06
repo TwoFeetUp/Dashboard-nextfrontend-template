@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { CardContent as CardContentRenderer } from './CardContent'
 import { CardLoadingState } from './CardLoadingState'
+import { MethodologySection } from './MethodologySection'
 import type { DashboardCard as DashboardCardType, CardContent as CardContentType } from '@/lib/dashboard-types'
 
 export type RefreshMode = 'data' | 'full'
@@ -112,7 +113,18 @@ export function DashboardCard({ card, userId, onEdit, onDelete, onRefresh }: Das
             </Button>
           </div>
         ) : content?.htmlContent ? (
-          <CardContentRenderer htmlContent={content.htmlContent} cardId={card.id} />
+          <>
+            {/* Key Insight - prominently displayed above the chart */}
+            {content.keyInsight && (
+              <div className="mb-3 p-3 bg-gradient-to-r from-tfu-purple/5 to-tfu-blue/5 border-l-4 border-tfu-purple rounded-r-lg">
+                <p className="text-sm text-tfu-black font-medium leading-relaxed">
+                  💡 {content.keyInsight}
+                </p>
+              </div>
+            )}
+            <CardContentRenderer htmlContent={content.htmlContent} cardId={card.id} />
+            <MethodologySection summary={content.summary} methodology={content.methodology} />
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center h-[200px] text-center p-4">
             <p className="text-sm text-tfu-black/60 mb-4">Geen data beschikbaar</p>

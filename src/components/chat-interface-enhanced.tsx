@@ -6,7 +6,6 @@ import { toast } from "sonner"
 import { useChatOCREnhanced } from "@/hooks/use-chat-ocr-enhanced"
 import ChatContainer from "./chat-container"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/hooks/use-auth"
 import { deleteConversation, updateConversationTitle } from "@/lib/conversation"
 import pb from "@/lib/pocketbase"
@@ -88,29 +87,49 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
     conversationId,
     assistantType: toolId,
     onError: handleChatError,
-    onFileProcessed: handleFileProcessed
+    onFileProcessed: handleFileProcessed,
+    onTitleGenerated: (title) => {
+      // Update session name when title is generated
+      if (currentSession) {
+        setSessions(prev => prev.map(s =>
+          s.id === currentSession.id ? { ...s, name: title } : s
+        ))
+        setCurrentSession(prev => prev ? { ...prev, name: title } : prev)
+      }
+    }
   })
 
   const loadSessions = useCallback(async () => {
+    // Ensure auth is fully valid before making requests
+    if (!pb.authStore.isValid || !pb.authStore.token) {
+      return
+    }
+
     const authUserId = pb.authStore.model?.id
     if (!authUserId) {
       await logout()
       return
     }
-    
+
     try {
       const records = await pb.collection('conversations').getList(1, 50, {
-        filter: `userId = "${authUserId}" && assistantType = "${toolId}"`,
+        filter: `userId="${authUserId}"&&assistantType="${toolId}"`,
         sort: '-created',
       })
       
-      const loadedSessions: ChatSession[] = records.items.map(record => ({
-        id: record.id,
-        name: record.title || `Chat ${new Date(record.created).toLocaleDateString('nl-NL')}`,
-        createdAt: new Date(record.created),
-        messageCount: 0,
-        conversationId: record.id
-      }))
+      const loadedSessions: ChatSession[] = records.items.map(record => {
+        const createdDate = record.created ? new Date(record.created) : new Date()
+        const isValidDate = createdDate instanceof Date && !isNaN(createdDate.getTime())
+        const finalDate = isValidDate ? createdDate : new Date()
+
+        return {
+          id: record.id,
+          name: record.title || `Chat ${finalDate.toLocaleDateString('nl-NL')}`,
+          createdAt: finalDate,
+          messageCount: 0,
+          conversationId: record.id
+        }
+      })
       
       setSessions(loadedSessions)
     } catch (error: any) {
@@ -310,15 +329,15 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
   }
 
   const renderSessions = () => (
-    <ScrollArea className="flex-1 p-3">
+    <div className="flex-1 overflow-y-auto p-3">
       <div className="space-y-1">
         {sessions.map((session) => {
           const isActive = currentSession?.id === session.id
           const showConfirm = sessionToDelete?.id === session.id
           const isEditing = editingSessionId === session.id
           const actionButtonClasses = (showConfirm || isActive)
-            ? "self-start text-tfu-black/40 hover:text-tfu-purple transition-opacity"
-            : "self-start text-tfu-black/40 hover:text-tfu-purple transition-opacity opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
+            ? "self-start text-tfu-black/40 hover:text-tfu-purple transition-colors h-6 w-6"
+            : "self-start text-tfu-black/40 group-hover:text-white/70 hover:!text-white transition-colors opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto h-6 w-6"
 
           return (
             <div
@@ -326,7 +345,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
               className={`group grid grid-cols-[1fr_auto_auto] items-start gap-2 p-2 rounded-lg ${!isEditing ? 'cursor-pointer' : ''} transition-colors ${
                 isActive
                   ? "bg-gradient-to-br from-tfu-purple/10 to-tfu-blue/15 border border-tfu-purple/30"
-                  : "bg-tfu-grey hover:bg-tfu-grey/70"
+                  : "bg-tfu-grey hover:bg-tfu-purple"
               }`}
               onClick={() => {
                 if (isEditing) return
@@ -353,9 +372,11 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
                   </div>
                 ) : (
                   <>
-                    <div className="font-bold text-xs text-tfu-black truncate">{session.name}</div>
-                    <div className="text-xs text-tfu-black/60 font-light">
-                      {session.createdAt.toLocaleDateString("nl-NL")}
+                    <div className={`font-bold text-xs text-tfu-black truncate transition-colors ${!isActive ? 'group-hover:text-white' : ''}`}>{session.name}</div>
+                    <div className={`text-xs text-tfu-black/60 font-light transition-colors ${!isActive ? 'group-hover:text-white/80' : ''}`}>
+                      {session.createdAt instanceof Date && !isNaN(session.createdAt.getTime())
+                        ? session.createdAt.toLocaleDateString("nl-NL")
+                        : new Date().toLocaleDateString("nl-NL")}
                     </div>
                   </>
                 )}
@@ -467,7 +488,7 @@ export function ChatInterfaceEnhanced({ toolName, toolId }: ChatInterfaceEnhance
           </div>
         )}
       </div>
-    </ScrollArea>
+    </div>
   )
 
   const renderSidebar = (variant: 'desktop' | 'mobile') => (

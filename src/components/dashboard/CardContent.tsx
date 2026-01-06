@@ -15,7 +15,7 @@ const isChartLoaded = () => typeof window !== 'undefined' && 'Chart' in window
 const getChart = () => {
   if (typeof window !== 'undefined' && 'Chart' in window) {
     return (window as { Chart?: unknown }).Chart as {
-      getChart: (canvas: HTMLCanvasElement | string) => { destroy: () => void } | undefined
+      getChart: (canvas: HTMLCanvasElement | string) => { destroy: () => void; update: (mode?: string) => void } | undefined
     }
   }
   return null
@@ -79,6 +79,9 @@ export function CardContent({ htmlContent, cardId }: CardContentProps) {
     const renderContent = async () => {
       if (!container) return
 
+      // Check if this render is still current (handles React Strict Mode double-render)
+      const isStaleRender = () => renderIdRef.current !== currentRenderId
+
       // Destroy any existing charts before re-rendering
       destroyExistingCharts(container)
 
@@ -135,17 +138,37 @@ export function CardContent({ htmlContent, cardId }: CardContentProps) {
         try {
           await loadChartJs()
 
-          // Wait for DOM to be ready and verify canvases exist
-          await new Promise(resolve => setTimeout(resolve, 150))
+          // Wait for DOM to be ready with polling mechanism
+          // Use querySelector with attribute selector for more reliable lookup
+          const waitForCanvases = async (maxAttempts = 5, interval = 100): Promise<boolean> => {
+            // If no canvases need to be found, return immediately
+            if (Object.keys(idMap).length === 0) {
+              return true
+            }
 
-          // Verify all canvases exist in the DOM before executing scripts
-          const canvasesInDom = Object.values(idMap).every(newId => {
-            const canvas = document.getElementById(newId)
-            return canvas !== null
-          })
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              await new Promise(resolve => setTimeout(resolve, interval))
+              const allFound = Object.values(idMap).every(newId => {
+                // Use attribute selector which handles special characters better
+                const canvas = container.querySelector(`canvas[id="${newId}"]`)
+                return canvas !== null
+              })
+              if (allFound) {
+                return true
+              }
+            }
+            return false
+          }
 
-          if (!canvasesInDom) {
-            console.warn('[CardContent] Canvas elements not found in DOM, skipping script execution')
+          const canvasesReady = await waitForCanvases()
+
+          // Abort if a newer render has started (React Strict Mode)
+          if (isStaleRender()) {
+            return
+          }
+
+          if (!canvasesReady) {
+            console.warn('[CardContent] Canvas elements not found after retries, skipping script execution')
             return
           }
 

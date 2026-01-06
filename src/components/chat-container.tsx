@@ -97,7 +97,7 @@ export default function ChatContainer({
   }, [messages, isLoading])
 
   return (
-    <div className="flex-1 min-w-0 bg-gray-50 border-r border-gray-200 flex flex-col h-full overflow-hidden">
+    <div className="flex-1 min-w-0 bg-tfu-grey flex flex-col h-full overflow-hidden">
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
@@ -118,7 +118,7 @@ export default function ChatContainer({
         </div>
       </div>
       
-      <div className="flex-shrink-0 border-t border-border bg-white">
+      <div className="flex-shrink-0 border-t border-tfu-grey bg-white">
         <DragDropZone
           onFilesDropped={onFilesDropped}
           uploadError={uploadError}

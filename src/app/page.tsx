@@ -56,6 +56,8 @@ import { BrandLogo } from "@/components/branding/brand-logo"
 
 interface UserProfile {
 
+  id: string
+
   name: string
 
   email: string
@@ -90,6 +92,8 @@ export default function HomePage() {
     if (user) {
 
       setUserProfile({
+
+        id: user.id,
 
         name: user.name || user.username || 'User',
 
@@ -476,15 +480,17 @@ function Dashboard({
             .map(part => part.charAt(0).toUpperCase() + part.slice(1))
             .join(' ')
 
-        const toolCards: ToolCard[] = Object.entries(agents).map(([id, agent]: any) => ({
-          id,
-          name: displayNames[id] || toTitle(id),
-          description: agent?.description || '',
-          icon: icons[id] || AlertCircle,
-          available: agent?.available !== false,
-          error: agent?.error ?? null,
-          model: agent?.model
-        }))
+        const toolCards: ToolCard[] = Object.entries(agents)
+          .filter(([id]) => id !== 'deep-research') // Exclude Deep Research from dashboard
+          .map(([id, agent]: any) => ({
+            id,
+            name: displayNames[id] || toTitle(id),
+            description: agent?.description || '',
+            icon: icons[id] || AlertCircle,
+            available: agent?.available !== false,
+            error: agent?.error ?? null,
+            model: agent?.model
+          }))
 
         // Add Research Dashboard as a special tool card
         const researchDashboard: ToolCard = {
@@ -555,7 +561,7 @@ function Dashboard({
 
         <header className="bg-white border-b border-tfu-grey flex-shrink-0 shadow-tfu-sm">
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
 
             <div className="flex justify-between items-center h-16">
 
@@ -656,7 +662,7 @@ function Dashboard({
 
             // Render Research Dashboard view
             if (selected.id === 'research-dashboard') {
-              return <DashboardView userId={userProfile.email} />
+              return <DashboardView userId={userProfile.id} />
             }
 
             return (

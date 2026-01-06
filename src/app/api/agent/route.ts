@@ -10,11 +10,18 @@ import { NextRequest } from 'next/server'
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
+interface FileAttachment {
+  content: string  // Base64 encoded content
+  filename: string
+  media_type: string  // MIME type
+}
+
 interface AgentRequest {
   message: string
   conversation_id?: string
   conversationId?: string
   messages?: Array<{ role: string; content: string }>
+  files?: FileAttachment[]  // Optional file attachments
 }
 
 interface AgentResponse {
@@ -40,6 +47,9 @@ export async function POST(req: NextRequest) {
       ? rawConversationId
       : 'default'
 
+    // Extract files if provided
+    const files = (body as any).files as FileAttachment[] | undefined
+
     if (!message) {
       return Response.json(
         { error: 'No message provided' },
@@ -60,7 +70,8 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         message,
         conversation_id: conversationId,
-        agent: assistantType // Pass the agent type for routing
+        agent: assistantType, // Pass the agent type for routing
+        files: files // Pass files to backend for BinaryContent processing
       })
     })
 

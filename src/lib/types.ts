@@ -11,6 +11,25 @@ export type MessageEvent =
   | { type: 'tool_call'; toolCall: ToolCall }
   | { type: 'text'; content: string }
 
+export interface ResearchOutput {
+  html_content: string
+  summary: string
+  sources: string[]
+  output_type: 'chart' | 'structured_html'
+  methodology?: {
+    tools_used: Array<{
+      tool_name: string
+      domain: string
+      results_count: number
+      success: boolean
+      error_message?: string
+    }>
+    total_sources_checked: number
+    analysis_steps: string[]
+    time_taken_seconds: number
+  }
+}
+
 export interface Message {
   id: string
   role: 'user' | 'assistant' | 'system' | 'tool'
@@ -19,6 +38,7 @@ export interface Message {
   reasoning?: string[]
   isThinking?: boolean
   timeline?: MessageEvent[]  // Chronological order of events
+  researchOutput?: ResearchOutput  // For Deep Research agent HTML output
   createdAt?: Date
 }
 
@@ -35,4 +55,6 @@ export interface DocumentAttachment {
   characterCount?: number
   pageCount?: number
   error?: string
+  persistedId?: string   // PocketBase record ID
+  fileUrl?: string       // PocketBase file URL
 }

@@ -81,7 +81,7 @@ export default function ChatInput({
         <Button
           type="submit"
           disabled={isLoading || !value?.trim()}
-          size="sm"
+          size="icon"
           className="bg-gradient-to-br from-tfu-purple to-tfu-blue text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (

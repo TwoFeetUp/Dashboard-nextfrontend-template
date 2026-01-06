@@ -18,12 +18,30 @@ export interface DashboardCard {
   updated: string
 }
 
+export interface ToolUsage {
+  toolName: string
+  domain: string
+  resultsCount: number
+  success: boolean
+  errorMessage?: string
+}
+
+export interface ResearchMethodology {
+  toolsUsed: ToolUsage[]
+  totalSourcesChecked: number
+  analysisSteps: string[]
+  timeTakenSeconds: number
+}
+
 export interface CardContent {
   htmlContent: string
   isStale: boolean
   isRefreshing: boolean
   generatedAt?: string
   errorMessage?: string
+  summary?: string
+  keyInsight?: string  // The main finding/conclusion from the research
+  methodology?: ResearchMethodology
 }
 
 export interface CardConfig {

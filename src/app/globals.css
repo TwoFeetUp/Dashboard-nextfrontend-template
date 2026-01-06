@@ -32,14 +32,20 @@
 }
 
 /* ===== Scrollbar Stability (VERPLICHT) ===== */
+/* Voorkom layout shift bij dropdowns/modals - altijd scrollbar zichtbaar */
 html {
-  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
-@supports not (scrollbar-gutter: stable) {
-  html {
-    overflow-y: scroll;
-  }
+/* Overschrijf Radix UI body scroll lock die layout shift veroorzaakt */
+body {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Verwijder Radix pointer-events lock op html */
+html[style*="pointer-events"] {
+  pointer-events: auto !important;
 }
 
 /* ===== shadcn/ui CSS Variables with TwoFeetUp Colors ===== */

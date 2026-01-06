@@ -187,7 +187,7 @@ export function AudioRecorder({
         type="button"
         onClick={handleClick}
         disabled={disabled || isTranscribing}
-        size="sm"
+        size="icon"
         variant={isRecording ? "destructive" : "secondary"}
         className={`relative ${isRecording ? 'animate-pulse' : ''}`}
         title={isRecording ? "Stop opname" : "Start spraakopname"}

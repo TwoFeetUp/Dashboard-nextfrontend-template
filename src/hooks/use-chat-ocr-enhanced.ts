@@ -1,9 +1,18 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import type { Message, MessageEvent, DocumentAttachment } from '../lib/types'
+import type { Message, MessageEvent, DocumentAttachment, ResearchOutput } from '../lib/types'
 import pb from '@/lib/pocketbase'
 import { useAuth } from '@/hooks/use-auth'
+import {
+  uploadAttachment,
+  getConversationAttachments,
+  deleteAttachment,
+  getAttachmentUrl,
+  getAttachmentBase64,
+  getAttachmentById,
+  PersistedAttachment
+} from '@/lib/attachments'
 
 // Stream timeout in milliseconds (2 minutes)
 const STREAM_TIMEOUT_MS = 120000
@@ -16,6 +25,7 @@ interface UseChatOCREnhancedOptions {
   assistantType?: string
   onError?: (error: Error) => void
   onFileProcessed?: (file: File, result: any) => void
+  onTitleGenerated?: (title: string) => void
 }
 
 export function useChatOCREnhanced({
@@ -25,7 +35,8 @@ export function useChatOCREnhanced({
   conversationId,
   assistantType = 'general',
   onError,
-  onFileProcessed
+  onFileProcessed,
+  onTitleGenerated
 }: UseChatOCREnhancedOptions = {}) {
   const { user, logout } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
@@ -49,7 +60,7 @@ export function useChatOCREnhanced({
   // Load existing messages from PocketBase when conversation changes
   const loadMessages = useCallback(async () => {
     if (!conversationId) return
-    
+
     try {
       const messages = await pb.collection('messages').getList(1, 200, {
         filter: `conversationId = "${conversationId}"`,
@@ -77,22 +88,56 @@ export function useChatOCREnhanced({
     }
   }, [conversationId, logout, onError])
 
+  // Load existing attachments from PocketBase when conversation changes
+  const loadAttachments = useCallback(async () => {
+    if (!conversationId) return
+
+    try {
+      const attachments = await getConversationAttachments(conversationId)
+      setDocuments(attachments.map((a: PersistedAttachment) => ({
+        id: a.id,
+        name: a.originalName,
+        size: a.fileSize,
+        type: a.mimeType,
+        status: 'ready' as const,
+        uploadedAt: new Date(a.created),
+        persistedId: a.id,
+        fileUrl: getAttachmentUrl(a)
+      })))
+    } catch (error) {
+      console.error('Failed to load attachments:', error)
+    }
+  }, [conversationId])
+
   useEffect(() => {
     if (conversationId && user) {
       loadMessages()
+      loadAttachments()
     } else {
       setMessages([])
+      setDocuments([])
     }
-  }, [conversationId, user, loadMessages])
+  }, [conversationId, user, loadMessages, loadAttachments])
 
-  // Handle file selection and OCR processing
+  // Handle file selection - load as base64 for direct agent processing
   const handleFileSelect = useCallback(async (files: FileList) => {
+    const authUserId = pb.authStore.model?.id
+    if (!authUserId) {
+      setUploadError('Niet ingelogd. Log opnieuw in.')
+      return
+    }
+
+    if (!conversationId) {
+      setUploadError('Geen actieve conversatie. Start eerst een chat.')
+      return
+    }
+
     const newDocs: DocumentAttachment[] = []
-    
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       const id = `doc-${Date.now()}-${i}`
-      
+
       // Create document attachment
       const doc: DocumentAttachment = {
         id,
@@ -102,84 +147,83 @@ export function useChatOCREnhanced({
         status: 'uploading',
         uploadedAt: new Date()
       }
-      
+
       newDocs.push(doc)
-      
+
       // Read file as base64
       const reader = new FileReader()
       reader.onload = async (e) => {
         const base64 = e.target?.result as string
         const base64Content = base64.split(',')[1] // Remove data:type;base64, prefix
-        
-        // Update document status to processing
-        setDocuments(prev => prev.map(d => 
-          d.id === id ? { ...d, status: 'processing' as const, content: base64Content } : d
-        ))
-        
+
         try {
-          // Send to OCR API
-          const response = await fetch(ocrEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              document: base64Content,
-              filename: file.name,
-              mimeType: file.type
-            })
-          })
-          
-          const result = await response.json()
-          
-          if (result.success) {
-            // Update document with OCR result
-            setDocuments(prev => prev.map(d => 
-              d.id === id ? {
-                ...d,
-                status: 'ready' as const,
-                ocrText: result.text,
-                characterCount: result.characterCount,
-                pageCount: result.pageCount,
-                processedAt: new Date()
-              } : d
-            ))
-            
-            // Clear any previous error
-            setUploadError(null)
-            
-            // Notify parent
-            onFileProcessed?.(file, result)
-          } else {
-            // Remove the failed document and show error
-            setDocuments(prev => prev.filter(d => d.id !== id))
-            const errorMsg = result.error || 'Failed to process document'
-            setUploadError(`${file.name}: ${errorMsg}`)
-            // Auto-clear error after 5 seconds
-            setTimeout(() => setUploadError(null), 5000)
-          }
-        } catch (error) {
-          // Remove the failed document and show network error
-          setDocuments(prev => prev.filter(d => d.id !== id))
-          setUploadError(`${file.name}: Network error during upload`)
-          // Auto-clear error after 5 seconds
+          // Upload to PocketBase for persistence
+          const persisted = await uploadAttachment(conversationId!, authUserId, file)
+
+          // File is ready - will be sent directly to agent as BinaryContent
+          setDocuments(prev => prev.map(d =>
+            d.id === id ? {
+              ...d,
+              status: 'ready' as const,
+              content: base64Content,
+              persistedId: persisted.id,
+              fileUrl: getAttachmentUrl(persisted),
+              processedAt: new Date()
+            } : d
+          ))
+
+          // Clear any previous error
+          setUploadError(null)
+
+          // Notify parent
+          onFileProcessed?.(file, { success: true, filename: file.name })
+        } catch (uploadError) {
+          console.error('Failed to upload attachment:', uploadError)
+          // Still allow the file to be used (just won't persist)
+          setDocuments(prev => prev.map(d =>
+            d.id === id ? {
+              ...d,
+              status: 'ready' as const,
+              content: base64Content,
+              processedAt: new Date()
+            } : d
+          ))
+          setUploadError(`${file.name}: Kon niet opslaan, maar is wel beschikbaar voor deze sessie`)
           setTimeout(() => setUploadError(null), 5000)
-          onError?.(error as Error)
         }
       }
-      
+
+      reader.onerror = () => {
+        // Remove the failed document and show error
+        setDocuments(prev => prev.filter(d => d.id !== id))
+        setUploadError(`${file.name}: Kon bestand niet laden`)
+        // Auto-clear error after 5 seconds
+        setTimeout(() => setUploadError(null), 5000)
+      }
+
       reader.readAsDataURL(file)
     }
-    
+
     // Add new documents to state
     setDocuments(prev => [...prev, ...newDocs])
-  }, [ocrEndpoint, onError, onFileProcessed])
+  }, [conversationId, onFileProcessed])
 
   const handleFilesDropped = useCallback((files: FileList) => {
     handleFileSelect(files)
   }, [handleFileSelect])
 
-  const removeDocument = useCallback((id: string) => {
+  const removeDocument = useCallback(async (id: string) => {
+    // Find the document to check if it has a persistedId
+    const doc = documents.find(d => d.id === id)
+    if (doc?.persistedId) {
+      try {
+        await deleteAttachment(doc.persistedId)
+      } catch (error) {
+        console.error('Failed to delete attachment from PocketBase:', error)
+      }
+    }
     setDocuments(prev => prev.filter(d => d.id !== id))
-  }, [])
+  }, [documents])
 
   const sendMessage = useCallback(async (contentOverride?: string) => {
     const messageContent = (contentOverride ?? input).trim()
@@ -207,20 +251,37 @@ export function useChatOCREnhanced({
       createdAt: new Date()
     }
 
-    let messageWithDocsForAPI = { ...userMessage }
-    if (documents.filter(d => d.status === 'ready').length > 0) {
-      const docTexts = documents
-        .filter(d => d.status === 'ready' && d.ocrText)
-        .map(d => `[Document: ${d.name}]\n${d.ocrText}`)
-        .join('\n\n')
-      messageWithDocsForAPI.content = `${messageContent}\n\n---\nAttached Documents:\n${docTexts}`
+    // Prepare files for API - convert ready documents to file attachments
+    // For persisted docs without content in memory, fetch base64 from PocketBase
+    const readyDocs = documents.filter(d => d.status === 'ready')
+    const filesForAPI: Array<{ content: string; filename: string; media_type: string }> = []
+
+    for (const doc of readyDocs) {
+      let content = doc.content
+      if (!content && doc.persistedId) {
+        // Fetch content from PocketBase if not in memory
+        try {
+          const attachment = await getAttachmentById(doc.persistedId)
+          content = await getAttachmentBase64(attachment)
+        } catch (error) {
+          console.error('Failed to fetch attachment content:', error)
+          continue
+        }
+      }
+      if (content) {
+        filesForAPI.push({
+          content,
+          filename: doc.name,
+          media_type: doc.type || 'application/octet-stream'
+        })
+      }
     }
 
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
 
-    const messagesForAPI = [...messages, messageWithDocsForAPI]
+    const messagesForAPI = [...messages, userMessage]
 
     let assistantTempId: string | null = null
     let assistantMessage = ''
@@ -274,7 +335,8 @@ export function useChatOCREnhanced({
             messages: messagesForAPI,
             conversationId,
             userId: authUserId,
-            assistantType
+            assistantType,
+            files: filesForAPI.length > 0 ? filesForAPI : undefined  // Include files if any
           }),
           signal: abortControllerRef.current.signal
         })
@@ -328,6 +390,9 @@ export function useChatOCREnhanced({
         let currentThinkingIndex: number | null = null
         let currentTextIndex: number | null = null
         const toolCallTimelineIndex = new Map<string, number>()
+
+        // Research output for Deep Research agent
+        let researchOutput: ResearchOutput | undefined
 
         const safeParseJson = (value: string) => {
           try {
@@ -561,7 +626,8 @@ export function useChatOCREnhanced({
                   reasoning: reasoningValue,
                   toolCalls,
                   isThinking,
-                  timeline: timelineEvents  // Only expose timeline once events exist
+                  timeline: timelineEvents,  // Only expose timeline once events exist
+                  researchOutput  // Include research output for Deep Research agent
                 }
               : msg
           ))
@@ -851,6 +917,16 @@ export function useChatOCREnhanced({
                 event.content = parsed.full_text
               }
             }
+
+            // Capture research output for Deep Research agent
+            if (parsed.research_output) {
+              researchOutput = parsed.research_output as ResearchOutput
+            }
+
+            // Handle generated title from first message
+            if (parsed.generated_title && typeof parsed.generated_title === 'string') {
+              onTitleGenerated?.(parsed.generated_title)
+            }
           }
 
           syncAssistantState()
@@ -988,8 +1064,9 @@ export function useChatOCREnhanced({
       }
     } finally {
       setIsLoading(false)
+      // Documents are now persisted in PocketBase - don't clear them
     }
-  }, [assistantType, chatEndpoint, conversationId, documents, input, logout, messages, onError])
+  }, [assistantType, chatEndpoint, conversationId, documents, input, logout, messages, onError, onTitleGenerated])
 
   return {
     messages,

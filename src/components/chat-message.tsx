@@ -4,7 +4,7 @@ import { memo, useMemo } from 'react'
 import { MarkdownRenderer } from './markdown-renderer'
 import { ToolCallDisplay } from './tool-call-display'
 import { ThinkingIndicator } from './thinking-indicator'
-import type { Message, MessageEvent } from '../lib/types'
+import type { Message, MessageEvent, ResearchOutput } from '../lib/types'
 import type { ToolCall } from '../lib/tools'
 
 interface ChatMessageProps {
@@ -68,6 +68,26 @@ const ChatMessageComponent = ({ message, isStreaming = false }: ChatMessageProps
               }
               return null
             })}
+
+            {/* Render research output HTML content */}
+            {message.researchOutput?.html_content && (
+              <div className="research-output mt-4 p-4 border border-gray-200 rounded-lg bg-white">
+                <div
+                  className="research-html-content"
+                  dangerouslySetInnerHTML={{ __html: message.researchOutput.html_content }}
+                />
+                {message.researchOutput.sources && message.researchOutput.sources.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 mb-1">Bronnen:</p>
+                    <ul className="text-xs text-gray-400 space-y-0.5">
+                      {message.researchOutput.sources.map((source, idx) => (
+                        <li key={idx}>{source}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
@@ -86,6 +106,26 @@ const ChatMessageComponent = ({ message, isStreaming = false }: ChatMessageProps
             {message.content && (
               <div className="leading-relaxed prose prose-sm max-w-none chat-message-content">
                 <MarkdownRenderer content={streamingContent} />
+              </div>
+            )}
+
+            {/* Render research output HTML content (fallback) */}
+            {message.researchOutput?.html_content && (
+              <div className="research-output mt-4 p-4 border border-gray-200 rounded-lg bg-white">
+                <div
+                  className="research-html-content"
+                  dangerouslySetInnerHTML={{ __html: message.researchOutput.html_content }}
+                />
+                {message.researchOutput.sources && message.researchOutput.sources.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 mb-1">Bronnen:</p>
+                    <ul className="text-xs text-gray-400 space-y-0.5">
+                      {message.researchOutput.sources.map((source, idx) => (
+                        <li key={idx}>{source}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>
