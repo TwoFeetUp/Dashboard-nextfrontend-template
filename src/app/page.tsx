@@ -565,7 +565,7 @@ function Dashboard({
 
             <div className="flex justify-between items-center h-16">
 
-              <div className="flex items-center space-x-4 animate-in fade-in duration-200">
+              <div className="flex items-center space-x-4 animate-in fade-in duration-300">
 
                 <Button
 
@@ -692,7 +692,7 @@ function Dashboard({
 
           <div className="flex justify-between items-center h-16">
 
-            <div className="animate-in fade-in duration-200">
+            <div className="animate-in fade-in duration-300">
               <BrandLogo />
             </div>
 
@@ -938,7 +938,7 @@ function ProfileManagement({
 
           <div className="flex justify-between items-center h-16">
 
-            <div className="flex items-center space-x-4 animate-in fade-in duration-200">
+            <div className="flex items-center space-x-4 animate-in fade-in duration-300">
 
               <Button variant="ghost" onClick={onBack} className="text-tfu-purple hover:text-tfu-violet hover:bg-tfu-grey">
 
