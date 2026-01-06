@@ -591,7 +591,7 @@ function Dashboard({
 
               <div className="flex items-center space-x-4">
 
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
 
                   <DropdownMenuTrigger asChild>
 
@@ -696,7 +696,7 @@ function Dashboard({
 
             <div className="flex items-center space-x-4">
 
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
 
                 <DropdownMenuTrigger asChild>
 
