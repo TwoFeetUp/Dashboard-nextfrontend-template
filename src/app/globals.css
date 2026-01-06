@@ -41,6 +41,14 @@ html {
 body {
   margin-right: 0 !important;
   padding-right: 0 !important;
+  overflow: visible !important;
+}
+
+/* Wanneer Radix data-scroll-locked toevoegt, voorkom overflow:hidden */
+body[data-scroll-locked] {
+  overflow: visible !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* Verwijder Radix pointer-events lock op html */
