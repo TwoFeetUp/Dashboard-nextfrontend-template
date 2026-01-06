@@ -95,7 +95,7 @@ export const agents: AgentConfig[] = [
   {
     id: "mickey-mice",
     name: "Mickey Mice",
-    description: "Readonly toegang tot MICE Operations voor events en meetings",
+    description: "AI assistent voor het beheren van events en meetings in MICE Operations",
     icon: Mouse,
     enabled: true,
     category: "operations",
