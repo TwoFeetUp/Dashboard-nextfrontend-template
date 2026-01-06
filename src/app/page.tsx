@@ -565,7 +565,7 @@ function Dashboard({
 
             <div className="flex justify-between items-center h-16">
 
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 animate-in fade-in duration-200">
 
                 <Button
 
@@ -595,7 +595,7 @@ function Dashboard({
 
                   <DropdownMenuTrigger asChild>
 
-                    <Button variant="ghost" className="flex items-center space-x-2 hover:bg-tfu-grey">
+                    <Button variant="ghost" className="flex items-center space-x-2 hover:bg-tfu-grey min-w-[160px]">
 
                       <div className="w-8 h-8 bg-gradient-to-br from-tfu-purple to-tfu-blue rounded-full flex items-center justify-center text-white text-sm font-bold">
 
@@ -692,7 +692,9 @@ function Dashboard({
 
           <div className="flex justify-between items-center h-16">
 
-            <BrandLogo />
+            <div className="animate-in fade-in duration-200">
+              <BrandLogo />
+            </div>
 
             <div className="flex items-center space-x-4">
 
@@ -700,7 +702,7 @@ function Dashboard({
 
                 <DropdownMenuTrigger asChild>
 
-                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-tfu-grey">
+                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-tfu-grey min-w-[160px]">
 
                     <div className="w-8 h-8 bg-gradient-to-br from-tfu-purple to-tfu-blue rounded-full flex items-center justify-center text-white text-sm font-bold">
 
@@ -936,7 +938,7 @@ function ProfileManagement({
 
           <div className="flex justify-between items-center h-16">
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 animate-in fade-in duration-200">
 
               <Button variant="ghost" onClick={onBack} className="text-tfu-purple hover:text-tfu-violet hover:bg-tfu-grey">
 
@@ -950,37 +952,55 @@ function ProfileManagement({
 
             <div className="flex items-center space-x-4">
 
-              <div className="flex items-center space-x-2">
+              <DropdownMenu modal={false}>
 
-                <div className="w-8 h-8 bg-gradient-to-br from-tfu-purple to-tfu-blue rounded-full flex items-center justify-center text-white text-sm font-bold">
+                <DropdownMenuTrigger asChild>
 
-                  {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
+                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-tfu-grey min-w-[160px]">
 
-                </div>
+                    <div className="w-8 h-8 bg-gradient-to-br from-tfu-purple to-tfu-blue rounded-full flex items-center justify-center text-white text-sm font-bold">
 
-                <div className="text-left">
+                      {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
 
-                  <div className="text-sm font-bold text-tfu-black">{userProfile.name}</div>
+                    </div>
 
-                  <div className="text-xs text-tfu-black/60 font-light">{userProfile.role}</div>
+                    <div className="text-left">
 
-                </div>
+                      <div className="text-sm font-bold text-tfu-black">{userProfile.name}</div>
 
-              </div>
+                      <div className="text-xs text-tfu-black/60 font-light">{userProfile.role}</div>
 
-              <Button
+                    </div>
 
-                variant="outline"
+                  </Button>
 
-                onClick={onLogout}
+                </DropdownMenuTrigger>
 
-                className="border-tfu-purple text-tfu-purple hover:bg-tfu-purple hover:text-white bg-transparent"
+                <DropdownMenuContent align="end" className="w-56">
 
-              >
+                  <DropdownMenuLabel>
 
-                Uitloggen
+                    <div className="flex flex-col space-y-1">
 
-              </Button>
+                      <p className="text-sm font-bold leading-none text-tfu-black">{userProfile.name}</p>
+
+                      <p className="text-xs leading-none text-tfu-black/60 font-light">{userProfile.email}</p>
+
+                    </div>
+
+                  </DropdownMenuLabel>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem onClick={onBack} className="hover:bg-tfu-grey">Dashboard</DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem onClick={onLogout} className="hover:bg-tfu-grey">Uitloggen</DropdownMenuItem>
+
+                </DropdownMenuContent>
+
+              </DropdownMenu>
 
             </div>
 
