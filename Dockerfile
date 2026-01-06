@@ -53,8 +53,9 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy public assets
-COPY --from=builder /app/public ./public
+# Copy public assets (optional - directory may not exist)
+RUN mkdir -p public
+COPY --from=builder /app/publi[c] ./public/
 
 # Set the correct permission for prerender cache
 RUN mkdir .next
