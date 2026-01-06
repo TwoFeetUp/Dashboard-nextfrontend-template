@@ -589,7 +589,7 @@ function Dashboard({
 
               </div>
 
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 ml-auto">
 
                 <DropdownMenu modal={false}>
 
@@ -688,15 +688,15 @@ function Dashboard({
 
       <header className="bg-white border-b border-tfu-grey shadow-tfu-sm">
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="flex justify-between items-center h-16">
+          <div className="flex items-center h-16">
 
             <div className="animate-in fade-in duration-300">
               <BrandLogo />
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 ml-auto">
 
               <DropdownMenu modal={false}>
 
@@ -934,9 +934,9 @@ function ProfileManagement({
 
       <header className="bg-white border-b border-tfu-grey shadow-tfu-sm">
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="flex justify-between items-center h-16">
+          <div className="flex items-center h-16">
 
             <div className="flex items-center space-x-4 animate-in fade-in duration-300">
 
@@ -950,7 +950,7 @@ function ProfileManagement({
 
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 ml-auto">
 
               <DropdownMenu modal={false}>
 
