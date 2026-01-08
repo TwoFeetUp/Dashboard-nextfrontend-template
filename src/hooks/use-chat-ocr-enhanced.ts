@@ -5,7 +5,8 @@ import type { Message, MessageEvent, DocumentAttachment, ToolCall, ElicitationRe
 import pb from '@/lib/pocketbase'
 import { useAuth } from '@/hooks/use-auth'
 
-const AGENT_API_BASE = process.env.NEXT_PUBLIC_AGENT_API_URL || 'http://localhost:8000'
+// Use relative API route for elicitation to avoid client-side env var issues
+const ELICITATION_API_ROUTE = '/api/elicitation/respond'
 
 // Sanitize values for PocketBase filter queries to prevent injection
 const sanitizeFilterValue = (value: string): string => {
@@ -45,8 +46,8 @@ export function useChatOCREnhanced({
     action: 'accept' | 'decline' | 'cancel',
     content?: Record<string, unknown>
   ) => {
-    const url = `${AGENT_API_BASE}/elicitation/respond`
-    console.log('[Elicitation] Sending response to:', url, { elicitationId, action, content })
+    const url = ELICITATION_API_ROUTE
+    console.log('[Elicitation] Sending response via API route:', url, { elicitationId, action, content })
 
     try {
       const response = await fetch(url, {
@@ -74,8 +75,7 @@ export function useChatOCREnhanced({
       console.error('[Elicitation] Failed to respond:', {
         message: err.message,
         name: err.name,
-        url,
-        agentApiBase: AGENT_API_BASE
+        url
       })
       onError?.(err)
     }
