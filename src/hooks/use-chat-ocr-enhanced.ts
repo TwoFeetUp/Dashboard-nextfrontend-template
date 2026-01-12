@@ -1029,40 +1029,17 @@ export function useChatOCREnhanced({
               : msg
           ))
 
-          // NOTE: We no longer reload messages from PocketBase after streaming.
-          // The streamed message is already visible to the user.
-          // Reloading would cause the message to disappear if backend failed to save.
-          // The backend should save messages, but we don't depend on it for display.
+          // NOTE: The backend saves assistant messages to PocketBase.
+          // We don't save here to avoid duplicates that corrupt conversation history.
+          // The streamed message is already visible to the user in the UI.
 
           try {
-            const createdAssistantMessage = await pb.collection('messages').create({
-              conversationId,
-              userId: authUserId,
-              role: 'assistant',
-              content: finalAssistantMessage,
-              metadata: assistantMetadata
+            await pb.collection('conversations').update(conversationId, {
+              lastMessage: finalAssistantMessage.slice(0, 100),
+              lastMessageAt: new Date().toISOString()
             })
-
-            setMessages(prev => prev.map(msg =>
-              msg.id === assistantTempId
-                ? {
-                    ...msg,
-                    id: createdAssistantMessage.id,
-                    createdAt: createdAssistantMessage.created ? new Date(createdAssistantMessage.created) : msg.createdAt
-                  }
-                : msg
-            ))
-
-            try {
-              await pb.collection('conversations').update(conversationId, {
-                lastMessage: finalAssistantMessage.slice(0, 100),
-                lastMessageAt: new Date().toISOString()
-              })
-            } catch (updateError) {
-              console.error('Failed to update conversation metadata:', updateError)
-            }
-          } catch (persistError) {
-            console.error('Failed to persist assistant message:', persistError)
+          } catch (updateError) {
+            console.error('Failed to update conversation metadata:', updateError)
           }
         } else {
           setMessages(prev => prev.filter(msg => msg.id !== assistantTempId))
