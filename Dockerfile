@@ -4,18 +4,17 @@
 # Multi-stage build for optimized production image
 
 # Stage 1: Dependencies
-FROM oven/bun:1.1.38-alpine AS deps
-RUN apk add --no-cache libc6-compat
+FROM oven/bun:1.4.0 AS deps
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lock* ./
+COPY package.json bun.lock ./
 
 # Install dependencies
 RUN bun install --frozen-lockfile
 
 # Stage 2: Builder
-FROM node:20-alpine AS builder
+FROM node:22.23.4-bookworm-slim AS builder
 WORKDIR /app
 
 # Copy dependencies from deps stage
@@ -30,7 +29,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Stage 3: Runner
-FROM node:20-alpine AS runner
+FROM node:22.23.4-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -39,8 +38,8 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 --gid nodejs nextjs
 
 # Copy built assets
 COPY --from=builder /app/public ./public
